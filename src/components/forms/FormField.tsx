@@ -1,3 +1,4 @@
+import { FormField as FoundationFormField } from 'foundation-ui'
 import type { PropsWithChildren, ReactNode } from 'react'
 
 interface FormFieldProps extends PropsWithChildren {
@@ -15,11 +16,14 @@ export function FormField({
   children,
 }: FormFieldProps) {
   return (
-    <label htmlFor={htmlFor} className="form-field">
-      <span className="form-field__label">{label}</span>
+    <FoundationFormField
+      controlId={htmlFor}
+      error={error}
+      hint={hint}
+      label={label}
+      required={false}
+    >
       {children}
-      {error ? <span className="form-field__error">{error}</span> : null}
-      {!error && hint ? <span className="form-field__hint">{hint}</span> : null}
-    </label>
+    </FoundationFormField>
   )
 }

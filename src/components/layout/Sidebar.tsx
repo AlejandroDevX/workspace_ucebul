@@ -8,135 +8,131 @@ import {
   Users,
   Workflow,
 } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
-import { AccessGuard } from '@/components/layout/AccessGuard'
+import { Sidebar as FoundationSidebar, type NavigationGroup } from 'foundation-ui'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { APP_ROUTES } from '@/routes/paths'
-import { cn } from '@/utils/classnames'
+import { useAuthStore } from '@/store/auth.store'
 
-const navigationItems = [
-  {
-    to: APP_ROUTES.dashboard,
-    label: 'Dashboard',
-    icon: LayoutGrid,
-  },
-  {
-    to: APP_ROUTES.profile,
-    label: 'Perfil',
-    icon: UserCircle2,
-  },
-] as const
-
-const adminNavigationItems = [
-  {
-    to: APP_ROUTES.users,
-    label: 'Usuarios',
-    icon: Users,
-  },
-  {
-    to: APP_ROUTES.userRoles,
-    label: 'Roles de usuario',
-    icon: Shield,
-  },
-  {
-    to: APP_ROUTES.userApplications,
-    label: 'Accesos por app',
-    icon: Workflow,
-  },
-  {
-    to: APP_ROUTES.applicationPermissions,
-    label: 'Permisos por app',
-    icon: ShieldCheck,
-  },
-  {
-    to: APP_ROUTES.userApplicationPermissions,
-    label: 'Permisos de usuario',
-    icon: KeyRound,
-  },
-] as const
-
-const superAdminNavigationItems = [
-  {
-    to: APP_ROUTES.roles,
-    label: 'Roles globales',
-    icon: Shield,
-  },
-  {
-    to: APP_ROUTES.applications,
-    label: 'Aplicaciones',
-    icon: Workflow,
-  },
-  {
-    to: APP_ROUTES.otps,
-    label: 'OTPs',
-    icon: KeyRound,
-  },
-] as const
+function hasAnyRole(userRoles: string[], expectedRoles: string[]) {
+  return expectedRoles.some((role) => userRoles.includes(role))
+}
 
 export function Sidebar() {
-  function renderNavItems(
-    items: ReadonlyArray<{ to: string; label: string; icon: typeof LayoutGrid }>,
-  ) {
-    return items.map((item) => {
-      const Icon = item.icon
+  const location = useLocation()
+  const navigate = useNavigate()
+  const roles = useAuthStore((state) => state.user?.roles ?? [])
 
-      return (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          end={item.to === APP_ROUTES.dashboard}
-          className={({ isActive }) =>
-            cn('sidebar__link', isActive && 'sidebar__link--active')
-          }
-        >
-          <Icon size={18} />
-          <span>{item.label}</span>
-        </NavLink>
-      )
+  const sections: NavigationGroup[] = [
+    {
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Dashboard',
+          icon: <LayoutGrid size={18} />,
+          active: location.pathname === APP_ROUTES.dashboard,
+          onClick: () => navigate(APP_ROUTES.dashboard),
+        },
+        {
+          id: 'profile',
+          label: 'Perfil',
+          icon: <UserCircle2 size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.profile),
+          onClick: () => navigate(APP_ROUTES.profile),
+        },
+      ],
+    },
+  ]
+
+  if (hasAnyRole(roles, ['admin', 'super_admin'])) {
+    sections.push({
+      label: 'Módulos Admin',
+      items: [
+        {
+          id: 'users',
+          label: 'Usuarios',
+          icon: <Users size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.users),
+          onClick: () => navigate(APP_ROUTES.users),
+        },
+        {
+          id: 'user-roles',
+          label: 'Roles de usuario',
+          icon: <Shield size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.userRoles),
+          onClick: () => navigate(APP_ROUTES.userRoles),
+        },
+        {
+          id: 'user-applications',
+          label: 'Accesos por app',
+          icon: <Workflow size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.userApplications),
+          onClick: () => navigate(APP_ROUTES.userApplications),
+        },
+        {
+          id: 'application-permissions',
+          label: 'Permisos por app',
+          icon: <ShieldCheck size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.applicationPermissions),
+          onClick: () => navigate(APP_ROUTES.applicationPermissions),
+        },
+        {
+          id: 'user-application-permissions',
+          label: 'Permisos de usuario',
+          icon: <KeyRound size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.userApplicationPermissions),
+          onClick: () => navigate(APP_ROUTES.userApplicationPermissions),
+        },
+      ],
+    })
+  }
+
+  if (hasAnyRole(roles, ['super_admin'])) {
+    sections.push({
+      label: 'Módulos Super Admin',
+      items: [
+        {
+          id: 'roles',
+          label: 'Roles globales',
+          icon: <Shield size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.roles),
+          onClick: () => navigate(APP_ROUTES.roles),
+        },
+        {
+          id: 'applications',
+          label: 'Aplicaciones',
+          icon: <Workflow size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.applications),
+          onClick: () => navigate(APP_ROUTES.applications),
+        },
+        {
+          id: 'otps',
+          label: 'OTPs',
+          icon: <KeyRound size={18} />,
+          active: location.pathname.startsWith(APP_ROUTES.otps),
+          onClick: () => navigate(APP_ROUTES.otps),
+        },
+      ],
     })
   }
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar__brand">
-        <span className="sidebar__brand-mark">UW</span>
-        <div>
-          <p className="sidebar__eyebrow">Ucebul Ecosystem</p>
-          <h1 className="sidebar__title">Workspace</h1>
+    <FoundationSidebar
+      footer={
+        <>
+          <AppWindow size={16} />
+          <p>SPA administrativa conectada a la API real del Workspace.</p>
+        </>
+      }
+      header={
+        <div className="sidebar__brand">
+          <span className="sidebar__brand-mark">UW</span>
+          <div>
+            <p className="sidebar__eyebrow">Ucebul Ecosystem</p>
+            <h1 className="sidebar__title">Workspace</h1>
+          </div>
         </div>
-      </div>
-
-      <nav className="sidebar__nav" aria-label="Principal">
-        {renderNavItems(navigationItems)}
-      </nav>
-
-      <AccessGuard allowedRoles={['admin', 'super_admin']}>
-        <section className="sidebar__section">
-          <div className="sidebar__section-header">
-            <Shield size={16} />
-            <span>Módulos Admin</span>
-          </div>
-          <nav className="sidebar__nav" aria-label="Administración">
-            {renderNavItems(adminNavigationItems)}
-          </nav>
-        </section>
-      </AccessGuard>
-
-      <AccessGuard allowedRoles={['super_admin']}>
-        <section className="sidebar__section">
-          <div className="sidebar__section-header">
-            <ShieldCheck size={16} />
-            <span>Módulos Super Admin</span>
-          </div>
-          <nav className="sidebar__nav" aria-label="Super administración">
-            {renderNavItems(superAdminNavigationItems)}
-          </nav>
-        </section>
-      </AccessGuard>
-
-      <div className="sidebar__footer">
-        <AppWindow size={16} />
-        <p>SPA administrativa conectada a la API real del Workspace.</p>
-      </div>
-    </aside>
+      }
+      sections={sections}
+    />
   )
 }

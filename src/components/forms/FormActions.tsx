@@ -1,3 +1,4 @@
+import { FormActions as FoundationFormActions } from 'foundation-ui'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/base/Button'
 
@@ -19,7 +20,7 @@ export function FormActions({
   align = 'end',
 }: FormActionsProps) {
   return (
-    <div className={`form-actions form-actions--${align}`}>
+    <FoundationFormActions className={`form-actions form-actions--${align}`}>
       {onCancel ? (
         <Button variant="ghost" onClick={onCancel}>
           {cancelLabel}
@@ -28,6 +29,6 @@ export function FormActions({
       <Button type="submit" isLoading={isSubmitting} leftIcon={submitIcon}>
         {submitLabel}
       </Button>
-    </div>
+    </FoundationFormActions>
   )
 }

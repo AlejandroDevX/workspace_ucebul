@@ -1,6 +1,16 @@
+import {
+  FormField,
+  Select,
+  Textarea,
+  type SelectOption,
+} from 'foundation-ui'
 import type { ReactNode } from 'react'
-import type { FieldValues, Path, UseFormReturn } from 'react-hook-form'
-import { FormField } from '@/components/forms/FormField'
+import {
+  Controller,
+  type FieldValues,
+  type Path,
+  type UseFormReturn,
+} from 'react-hook-form'
 import { Input } from '@/components/base/Input'
 import { FieldGroup } from '@/components/forms/FieldGroup'
 import { cn } from '@/utils/classnames'
@@ -48,11 +58,20 @@ export function ResourceForm<TValues extends FieldValues>({
   className,
 }: ResourceFormProps<TValues>) {
   return (
-    <form className={cn('resource-form', className)} onSubmit={form.handleSubmit(onSubmit)}>
+    <form
+      className={cn('resource-form', className)}
+      noValidate
+      onSubmit={form.handleSubmit(onSubmit)}
+    >
       <FieldGroup columns={columns}>
         {fields.map((field) => {
           const error = form.formState.errors[field.name]?.message
           const key = String(field.name)
+          const options: SelectOption[] =
+            field.options?.map((option) => ({
+              label: option.label,
+              value: option.value,
+            })) ?? []
 
           if (field.type === 'checkbox') {
             return (
@@ -75,34 +94,44 @@ export function ResourceForm<TValues extends FieldValues>({
           return (
             <FormField
               key={key}
-              htmlFor={key}
-              label={field.label}
-              hint={field.hint}
+              controlId={key}
               error={typeof error === 'string' ? error : undefined}
+              hint={field.hint}
+              label={field.label}
             >
               {field.type === 'textarea' ? (
-                <textarea
+                <Textarea
                   id={key}
                   rows={field.rows ?? 4}
                   placeholder={field.placeholder}
-                  className="input textarea"
                   disabled={field.disabled}
+                  invalid={Boolean(error)}
                   {...form.register(field.name)}
                 />
               ) : field.type === 'select' ? (
-                <select
-                  id={key}
-                  className="input"
-                  disabled={field.disabled}
-                  {...form.register(field.name)}
-                >
-                  <option value="">Selecciona una opción</option>
-                  {field.options?.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <Controller
+                  control={form.control}
+                  name={field.name}
+                  render={({ field: controllerField }) => (
+                    <Select
+                      controlId={key}
+                      disabled={field.disabled}
+                      invalid={Boolean(error)}
+                      options={options}
+                      placeholder="Selecciona una opción"
+                      searchable={options.length > 6}
+                      value={
+                        typeof controllerField.value === 'string'
+                          ? controllerField.value
+                          : null
+                      }
+                      onValueChange={(value) => {
+                        controllerField.onChange(value ?? '')
+                        controllerField.onBlur()
+                      }}
+                    />
+                  )}
+                />
               ) : (
                 <Input
                   id={key}

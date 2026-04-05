@@ -17,7 +17,9 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "foundation-ui": ["node_modules/foundation-ui/src/index.ts"],
+      "foundation-ui/*": ["node_modules/foundation-ui/src/*"]
     },
 
     /* Linting */

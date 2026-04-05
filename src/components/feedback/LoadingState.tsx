@@ -1,4 +1,4 @@
-import { LoaderCircle } from 'lucide-react'
+import { LoadingState as FoundationLoadingState } from 'foundation-ui'
 import { cn } from '@/utils/classnames'
 
 interface LoadingStateProps {
@@ -11,11 +11,11 @@ export function LoadingState({
   fullScreen = false,
 }: LoadingStateProps) {
   return (
-    <div className={cn('feedback-state', fullScreen && 'feedback-state--fullscreen')}>
-      <span className="feedback-state__icon feedback-state__icon--spin">
-        <LoaderCircle size={18} />
-      </span>
-      <p className="feedback-state__description">{message}</p>
+    <div className={cn('workspace-loading-state', fullScreen && 'workspace-loading-state--fullscreen')}>
+      <FoundationLoadingState
+        description={message}
+        title="Cargando"
+      />
     </div>
   )
 }

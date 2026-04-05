@@ -1,10 +1,16 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
-import { LoaderCircle } from 'lucide-react'
-import { cn } from '@/utils/classnames'
+import {
+  Button as FoundationButton,
+  type ButtonProps as FoundationButtonProps,
+} from 'foundation-ui'
+import type { ReactNode } from 'react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps
+  extends Omit<
+    FoundationButtonProps,
+    'leadingIcon' | 'loading' | 'trailingIcon' | 'variant'
+  > {
   variant?: ButtonVariant
   fullWidth?: boolean
   isLoading?: boolean
@@ -13,9 +19,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Button({
-  className,
   children,
-  disabled,
   variant = 'primary',
   fullWidth = false,
   isLoading = false,
@@ -25,20 +29,16 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      type={type}
-      className={cn(
-        'button',
-        `button--${variant}`,
-        fullWidth && 'button--full-width',
-        className,
-      )}
-      disabled={disabled || isLoading}
+    <FoundationButton
       {...props}
+      fullWidth={fullWidth}
+      leadingIcon={leftIcon}
+      loading={isLoading}
+      trailingIcon={rightIcon}
+      type={type}
+      variant={variant}
     >
-      {isLoading ? <LoaderCircle className="button__spinner" size={16} /> : leftIcon}
-      <span>{children}</span>
-      {!isLoading ? rightIcon : null}
-    </button>
+      {children}
+    </FoundationButton>
   )
 }

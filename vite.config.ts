@@ -12,6 +12,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'foundation-ui': fileURLToPath(
+        new URL('./node_modules/foundation-ui/src', import.meta.url),
+      ),
     },
   },
 })

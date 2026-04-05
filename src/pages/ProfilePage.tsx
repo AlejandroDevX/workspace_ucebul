@@ -1,5 +1,6 @@
 import { Card } from '@/components/base/Card'
 import { PageHeader } from '@/components/base/PageHeader'
+import { PermissionBadge } from '@/components/feedback/PermissionBadge'
 import { useAuthStore } from '@/store/auth.store'
 
 export function ProfilePage() {
@@ -32,21 +33,23 @@ export function ProfilePage() {
           </dl>
         </Card>
 
-        <Card title="Roles globales" description="Los guards consumen esta información para controlar el acceso por ruta.">
+        <Card
+          title="Roles globales"
+          description="Los guards consumen esta información para controlar el acceso por ruta."
+        >
           <div className="tag-list">
             {(user?.roles ?? []).length > 0 ? (
-              user?.roles.map((role) => (
-                <span key={role} className="badge">
-                  {role}
-                </span>
-              ))
+              user?.roles.map((role) => <PermissionBadge key={role} label={role} />)
             ) : (
               <p className="text-muted">No hay roles resueltos en la sesión actual.</p>
             )}
           </div>
         </Card>
 
-        <Card title="Sesión" description="Estado local que se persiste y revalida contra Laravel al refrescar.">
+        <Card
+          title="Sesión"
+          description="Estado local que se persiste y revalida contra Laravel al refrescar."
+        >
           <dl className="detail-list">
             <div>
               <dt>Token persistido</dt>

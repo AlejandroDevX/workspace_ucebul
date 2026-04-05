@@ -1,4 +1,5 @@
 import { LogOut, ShieldCheck } from 'lucide-react'
+import { Topbar as FoundationTopbar } from 'foundation-ui'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/base/Button'
 import { useLogoutMutation } from '@/modules/auth/hooks/useAuthMutations'
@@ -57,32 +58,32 @@ export function Topbar() {
   }
 
   return (
-    <header className="topbar">
-      <div>
-        <p className="topbar__eyebrow">{resolvePageEyebrow(location.pathname)}</p>
-        <h2 className="topbar__title">{resolvePageTitle(location.pathname)}</h2>
-      </div>
-
-      <div className="topbar__actions">
-        <div className="topbar__identity">
-          <span className="topbar__identity-icon">
-            <ShieldCheck size={16} />
-          </span>
-          <div>
-            <strong>{user?.name ?? 'Usuario autenticado'}</strong>
-            <span>{user?.email ?? 'Sin correo disponible'}</span>
+    <FoundationTopbar
+      leading={<ShieldCheck size={18} />}
+      subtitle={resolvePageEyebrow(location.pathname)}
+      title={resolvePageTitle(location.pathname)}
+      trailing={
+        <div className="topbar__actions">
+          <div className="topbar__identity">
+            <span className="topbar__identity-icon">
+              <ShieldCheck size={16} />
+            </span>
+            <div>
+              <strong>{user?.name ?? 'Usuario autenticado'}</strong>
+              <span>{user?.email ?? 'Sin correo disponible'}</span>
+            </div>
           </div>
-        </div>
 
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          isLoading={logoutMutation.isPending}
-          leftIcon={<LogOut size={16} />}
-        >
-          Salir
-        </Button>
-      </div>
-    </header>
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            isLoading={logoutMutation.isPending}
+            leftIcon={<LogOut size={16} />}
+          >
+            Salir
+          </Button>
+        </div>
+      }
+    />
   )
 }

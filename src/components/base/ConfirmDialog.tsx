@@ -1,5 +1,4 @@
-import { Button } from '@/components/base/Button'
-import { Modal } from '@/components/base/Modal'
+import { ConfirmDialog as FoundationConfirmDialog } from 'foundation-ui'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -23,25 +22,23 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onCancel}
-      title={title}
+    <FoundationConfirmDialog
+      cancelLabel={cancelLabel}
+      confirmLabel={confirmLabel}
+      confirmLoading={isConfirming}
       description={description}
-      footer={
-        <div className="modal__actions">
-          <Button variant="ghost" onClick={onCancel}>
-            {cancelLabel}
-          </Button>
-          <Button variant="danger" onClick={onConfirm} isLoading={isConfirming}>
-            {confirmLabel}
-          </Button>
-        </div>
-      }
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      onOpenChange={(open) => {
+        if (!open) {
+          onCancel()
+        }
+      }}
+      open={isOpen}
+      title={title}
+      tone="danger"
     >
-      <p className="text-muted">
-        Esta acción no se puede deshacer desde la interfaz actual.
-      </p>
-    </Modal>
+      <p className="text-muted">Esta acción no se puede deshacer desde la interfaz actual.</p>
+    </FoundationConfirmDialog>
   )
 }

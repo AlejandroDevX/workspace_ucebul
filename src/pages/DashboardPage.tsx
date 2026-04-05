@@ -2,6 +2,8 @@ import { Activity, Shield, Users, Workflow } from 'lucide-react'
 import { Card } from '@/components/base/Card'
 import { DataTable } from '@/components/base/DataTable'
 import { PageHeader } from '@/components/base/PageHeader'
+import { PermissionBadge } from '@/components/feedback/PermissionBadge'
+import { StatusBadge } from '@/components/feedback/StatusBadge'
 import { useAuthStore } from '@/store/auth.store'
 
 const overviewCards = [
@@ -109,12 +111,28 @@ export function DashboardPage() {
               {
                 key: 'state',
                 header: 'Estado',
-                cell: (row) => <span className="badge">{row.state}</span>,
+                cell: (row) => <StatusBadge label={row.state} tone="success" />,
               },
             ]}
             data={moduleReadiness}
             getRowId={(row) => row.id}
           />
+        </Card>
+
+        <Card
+          title="Foundation UI adoptado"
+          description="Base compartida ya alineada con la librería instalada."
+        >
+          <div className="tag-list">
+            <PermissionBadge label="ThemeProvider + themes" />
+            <PermissionBadge label="Primitives" />
+            <PermissionBadge label="Feedback states" />
+            <PermissionBadge label="Overlays" />
+            <PermissionBadge label="Searchable selects" />
+            <PermissionBadge label="RHF wrappers" />
+            <PermissionBadge label="Sidebar / Topbar" />
+            <PermissionBadge label="DataTable" />
+          </div>
         </Card>
       </section>
     </div>

@@ -17,6 +17,12 @@
   background: transparent;
 }
 
+.workspace-loading-state--fullscreen {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+}
+
 .feedback-state--error {
   justify-items: start;
   text-align: left;

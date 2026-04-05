@@ -1,3 +1,4 @@
+import { Card as FoundationCard } from 'foundation-ui'
 import type { PropsWithChildren, ReactNode } from 'react'
 import { cn } from '@/utils/classnames'
 
@@ -18,7 +19,7 @@ export function Card({
   className,
 }: CardProps) {
   return (
-    <section className={cn('card', className)}>
+    <FoundationCard className={cn('card', className)} elevated>
       {(title || description || action) && (
         <header className="card__header">
           <div>
@@ -30,6 +31,6 @@ export function Card({
       )}
       <div className="card__content">{children}</div>
       {footer ? <footer className="card__footer">{footer}</footer> : null}
-    </section>
+    </FoundationCard>
   )
 }

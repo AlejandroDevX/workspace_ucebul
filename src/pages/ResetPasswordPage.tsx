@@ -1,12 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { RHFTextField } from 'foundation-ui'
 import { KeyRound } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/base/Button'
 import { Card } from '@/components/base/Card'
-import { Input } from '@/components/base/Input'
 import { ErrorState } from '@/components/feedback/ErrorState'
-import { FormField } from '@/components/forms/FormField'
 import { useResetPasswordMutation } from '@/modules/auth/hooks/useAuthMutations'
 import {
   resetPasswordSchema,
@@ -46,65 +45,44 @@ export function ResetPasswordPage() {
       title="Crear nueva contraseña"
       description="Define una nueva credencial para restablecer el acceso al Workspace."
     >
-      <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          htmlFor="workspace_otp_email"
+      <form className="auth-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <RHFTextField
+          autoComplete="email"
+          control={form.control}
           label="Correo"
-          error={form.formState.errors.workspace_otp_email?.message}
-        >
-          <Input
-            id="workspace_otp_email"
-            type="email"
-            placeholder="correo@ucebul.com"
-            autoComplete="email"
-            invalid={Boolean(form.formState.errors.workspace_otp_email)}
-            {...form.register('workspace_otp_email')}
-          />
-        </FormField>
+          name="workspace_otp_email"
+          placeholder="correo@ucebul.com"
+          required
+          type="email"
+        />
 
-        <FormField
-          htmlFor="workspace_otp_code"
+        <RHFTextField
+          control={form.control}
           label="OTP"
-          error={form.formState.errors.workspace_otp_code?.message}
-        >
-          <Input
-            id="workspace_otp_code"
-            type="text"
-            placeholder="123456"
-            invalid={Boolean(form.formState.errors.workspace_otp_code)}
-            {...form.register('workspace_otp_code')}
-          />
-        </FormField>
+          name="workspace_otp_code"
+          placeholder="123456"
+          required
+        />
 
-        <FormField
-          htmlFor="workspace_user_password"
+        <RHFTextField
+          autoComplete="new-password"
+          control={form.control}
           label="Nueva contraseña"
-          error={form.formState.errors.workspace_user_password?.message}
-        >
-          <Input
-            id="workspace_user_password"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-            invalid={Boolean(form.formState.errors.workspace_user_password)}
-            {...form.register('workspace_user_password')}
-          />
-        </FormField>
+          name="workspace_user_password"
+          placeholder="••••••••"
+          required
+          type="password"
+        />
 
-        <FormField
-          htmlFor="workspace_user_password_confirmation"
+        <RHFTextField
+          autoComplete="new-password"
+          control={form.control}
           label="Confirmar contraseña"
-          error={form.formState.errors.workspace_user_password_confirmation?.message}
-        >
-          <Input
-            id="workspace_user_password_confirmation"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="new-password"
-            invalid={Boolean(form.formState.errors.workspace_user_password_confirmation)}
-            {...form.register('workspace_user_password_confirmation')}
-          />
-        </FormField>
+          name="workspace_user_password_confirmation"
+          placeholder="••••••••"
+          required
+          type="password"
+        />
 
         {resetPasswordMutation.error ? (
           <ErrorState description={getErrorMessage(resetPasswordMutation.error)} />

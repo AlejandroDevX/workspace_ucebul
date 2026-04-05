@@ -1,9 +1,12 @@
 import { Compass } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/base/Button'
 import { Card } from '@/components/base/Card'
 import { APP_ROUTES } from '@/routes/paths'
 
 export function NotFoundPage() {
+  const navigate = useNavigate()
+
   return (
     <div className="page-center">
       <Card className="status-card">
@@ -12,9 +15,7 @@ export function NotFoundPage() {
         </span>
         <h1>Página no encontrada</h1>
         <p>La ruta solicitada no existe dentro del Workspace.</p>
-        <Link className="button button--primary" to={APP_ROUTES.dashboard}>
-          Ir al inicio
-        </Link>
+        <Button onClick={() => navigate(APP_ROUTES.dashboard)}>Ir al inicio</Button>
       </Card>
     </div>
   )

@@ -1,12 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { RHFTextField } from 'foundation-ui'
 import { Mail } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Link, createSearchParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/base/Button'
 import { Card } from '@/components/base/Card'
-import { Input } from '@/components/base/Input'
 import { ErrorState } from '@/components/feedback/ErrorState'
-import { FormField } from '@/components/forms/FormField'
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
@@ -42,22 +41,17 @@ export function ForgotPasswordPage() {
       title="Recuperar contraseña"
       description="Solicita un OTP para restablecer el acceso a tu cuenta."
     >
-      <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          htmlFor="workspace_user_email"
-          label="Correo"
-          error={form.formState.errors.workspace_user_email?.message}
+      <form className="auth-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <RHFTextField
+          autoComplete="email"
+          control={form.control}
           hint="El backend enviará el OTP al correo asociado."
-        >
-          <Input
-            id="workspace_user_email"
-            type="email"
-            placeholder="correo@ucebul.com"
-            autoComplete="email"
-            invalid={Boolean(form.formState.errors.workspace_user_email)}
-            {...form.register('workspace_user_email')}
-          />
-        </FormField>
+          label="Correo"
+          name="workspace_user_email"
+          placeholder="correo@ucebul.com"
+          required
+          type="email"
+        />
 
         {forgotPasswordMutation.error ? (
           <ErrorState description={getErrorMessage(forgotPasswordMutation.error)} />

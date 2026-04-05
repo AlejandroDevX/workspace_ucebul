@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { RHFOTPField, RHFTextField } from 'foundation-ui'
 import { ShieldCheck } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import {
@@ -9,9 +10,7 @@ import {
 } from 'react-router-dom'
 import { Button } from '@/components/base/Button'
 import { Card } from '@/components/base/Card'
-import { Input } from '@/components/base/Input'
 import { ErrorState } from '@/components/feedback/ErrorState'
-import { FormField } from '@/components/forms/FormField'
 import { useVerifyOtpMutation } from '@/modules/auth/hooks/useAuthMutations'
 import {
   verifyOtpSchema,
@@ -51,36 +50,25 @@ export function VerifyOtpPage() {
       title="Verificar OTP"
       description="Confirma el código recibido para continuar con el cambio de contraseña."
     >
-      <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          htmlFor="workspace_otp_email"
+      <form className="auth-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <RHFTextField
+          autoComplete="email"
+          control={form.control}
           label="Correo"
-          error={form.formState.errors.workspace_otp_email?.message}
-        >
-          <Input
-            id="workspace_otp_email"
-            type="email"
-            placeholder="correo@ucebul.com"
-            autoComplete="email"
-            invalid={Boolean(form.formState.errors.workspace_otp_email)}
-            {...form.register('workspace_otp_email')}
-          />
-        </FormField>
+          name="workspace_otp_email"
+          placeholder="correo@ucebul.com"
+          required
+          type="email"
+        />
 
-        <FormField
-          htmlFor="workspace_otp_code"
-          label="Código OTP"
-          error={form.formState.errors.workspace_otp_code?.message}
+        <RHFOTPField
+          control={form.control}
           hint="Usa el código exacto entregado por el backend."
-        >
-          <Input
-            id="workspace_otp_code"
-            type="text"
-            placeholder="123456"
-            invalid={Boolean(form.formState.errors.workspace_otp_code)}
-            {...form.register('workspace_otp_code')}
-          />
-        </FormField>
+          label="Código OTP"
+          length={6}
+          name="workspace_otp_code"
+          required
+        />
 
         {verifyOtpMutation.error ? (
           <ErrorState description={getErrorMessage(verifyOtpMutation.error)} />

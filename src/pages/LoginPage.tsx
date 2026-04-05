@@ -1,12 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { RHFTextField } from 'foundation-ui'
 import { LogIn } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/base/Button'
 import { Card } from '@/components/base/Card'
-import { Input } from '@/components/base/Input'
 import { ErrorState } from '@/components/feedback/ErrorState'
-import { FormField } from '@/components/forms/FormField'
 import {
   loginSchema,
   type LoginFormValues,
@@ -38,36 +37,25 @@ export function LoginPage() {
       title="Iniciar sesión"
       description="Accede al panel principal del Workspace con tu cuenta global."
     >
-      <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <FormField
-          htmlFor="workspace_user_email"
+      <form className="auth-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <RHFTextField
+          autoComplete="email"
+          control={form.control}
           label="Correo"
-          error={form.formState.errors.workspace_user_email?.message}
-        >
-          <Input
-            id="workspace_user_email"
-            type="email"
-            placeholder="correo@ucebul.com"
-            autoComplete="email"
-            invalid={Boolean(form.formState.errors.workspace_user_email)}
-            {...form.register('workspace_user_email')}
-          />
-        </FormField>
+          name="workspace_user_email"
+          placeholder="correo@ucebul.com"
+          required
+        />
 
-        <FormField
-          htmlFor="workspace_user_password"
+        <RHFTextField
+          autoComplete="current-password"
+          control={form.control}
           label="Contraseña"
-          error={form.formState.errors.workspace_user_password?.message}
-        >
-          <Input
-            id="workspace_user_password"
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-            invalid={Boolean(form.formState.errors.workspace_user_password)}
-            {...form.register('workspace_user_password')}
-          />
-        </FormField>
+          name="workspace_user_password"
+          placeholder="••••••••"
+          required
+          type="password"
+        />
 
         {loginMutation.error ? (
           <ErrorState description={getErrorMessage(loginMutation.error)} />

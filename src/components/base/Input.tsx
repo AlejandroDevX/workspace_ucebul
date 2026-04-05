@@ -1,19 +1,14 @@
-import { forwardRef, type InputHTMLAttributes } from 'react'
-import { cn } from '@/utils/classnames'
+import {
+  Input as FoundationInput,
+  type InputProps as FoundationInputProps,
+} from 'foundation-ui'
+import { forwardRef } from 'react'
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  invalid?: boolean
-}
+interface InputProps extends FoundationInputProps {}
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { className, invalid = false, ...props },
+  props,
   ref,
 ) {
-  return (
-    <input
-      ref={ref}
-      className={cn('input', invalid && 'input--invalid', className)}
-      {...props}
-    />
-  )
+  return <FoundationInput {...props} ref={ref} />
 })

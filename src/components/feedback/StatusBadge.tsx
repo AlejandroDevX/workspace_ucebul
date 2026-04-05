@@ -1,4 +1,4 @@
-import { cn } from '@/utils/classnames'
+import { StatusBadge as FoundationStatusBadge } from 'foundation-ui'
 
 type StatusTone = 'default' | 'success' | 'warning' | 'danger'
 
@@ -11,5 +11,10 @@ export function StatusBadge({
   label,
   tone = 'default',
 }: StatusBadgeProps) {
-  return <span className={cn('status-badge', `status-badge--${tone}`)}>{label}</span>
+  return (
+    <FoundationStatusBadge
+      status={label}
+      tone={tone === 'default' ? 'neutral' : tone}
+    />
+  )
 }

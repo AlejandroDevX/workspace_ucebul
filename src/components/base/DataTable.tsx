@@ -1,6 +1,11 @@
-import type { ReactNode } from 'react'
-import { EmptyState } from '@/components/feedback/EmptyState'
-import { cn } from '@/utils/classnames'
+import type { ColumnDef } from '@tanstack/react-table'
+import { DataTable as FoundationDataTable } from 'foundation-ui'
+import { useMemo, type ReactNode } from 'react'
+
+interface WorkspaceTableRow<TData> {
+  __workspaceRowId: string | number
+  __workspaceRow: TData
+}
 
 export interface DataTableColumn<TData> {
   key: string
@@ -26,39 +31,35 @@ export function DataTable<TData>({
   emptyTitle = 'Sin registros',
   emptyDescription = 'No hay información disponible para mostrar todavía.',
 }: DataTableProps<TData>) {
-  if (data.length === 0) {
-    return (
-      <div className="data-table data-table--empty">
-        <EmptyState title={emptyTitle} description={emptyDescription} />
-      </div>
-    )
-  }
+  const rows = useMemo<Array<WorkspaceTableRow<TData>>>(
+    () =>
+      data.map((row) => ({
+        __workspaceRowId: getRowId(row),
+        __workspaceRow: row,
+      })),
+    [data, getRowId],
+  )
+
+  const columnDefs = useMemo<Array<ColumnDef<WorkspaceTableRow<TData>>>>(
+    () =>
+      columns.map((column) => ({
+        id: column.key,
+        header: () => column.header,
+        cell: ({ row }) => column.cell(row.original.__workspaceRow),
+      })),
+    [columns],
+  )
 
   return (
     <div className="data-table">
-      <table>
-        {caption ? <caption>{caption}</caption> : null}
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key} className={column.className}>
-                {column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row) => (
-            <tr key={getRowId(row)}>
-              {columns.map((column) => (
-                <td key={column.key} className={cn(column.className)}>
-                  {column.cell(row)}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <FoundationDataTable
+        columns={columnDefs}
+        data={rows}
+        emptyDescription={emptyDescription}
+        emptyTitle={emptyTitle}
+        searchable={false}
+      />
+      {caption ? <span className="sr-only">{caption}</span> : null}
     </div>
   )
 }
