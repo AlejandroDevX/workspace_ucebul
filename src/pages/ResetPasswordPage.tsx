@@ -22,15 +22,21 @@ export function ResetPasswordPage() {
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
-      email: searchParams.get('email') ?? '',
-      otp: searchParams.get('otp') ?? '',
-      password: '',
-      passwordConfirmation: '',
+      workspace_otp_email: searchParams.get('workspace_otp_email') ?? '',
+      workspace_otp_code: searchParams.get('workspace_otp_code') ?? '',
+      workspace_user_password: '',
+      workspace_user_password_confirmation: '',
+      workspace_otp_purpose: searchParams.get('workspace_otp_purpose') ?? 'password_reset',
     },
   })
 
   async function onSubmit(values: ResetPasswordFormValues) {
-    await resetPasswordMutation.mutateAsync(values)
+    const {
+      workspace_user_password_confirmation: _workspaceUserPasswordConfirmation,
+      ...payload
+    } = values
+
+    await resetPasswordMutation.mutateAsync(payload)
     navigate(APP_ROUTES.login, { replace: true })
   }
 
@@ -42,61 +48,61 @@ export function ResetPasswordPage() {
     >
       <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
-          htmlFor="email"
+          htmlFor="workspace_otp_email"
           label="Correo"
-          error={form.formState.errors.email?.message}
+          error={form.formState.errors.workspace_otp_email?.message}
         >
           <Input
-            id="email"
+            id="workspace_otp_email"
             type="email"
             placeholder="correo@ucebul.com"
             autoComplete="email"
-            invalid={Boolean(form.formState.errors.email)}
-            {...form.register('email')}
+            invalid={Boolean(form.formState.errors.workspace_otp_email)}
+            {...form.register('workspace_otp_email')}
           />
         </FormField>
 
         <FormField
-          htmlFor="otp"
+          htmlFor="workspace_otp_code"
           label="OTP"
-          error={form.formState.errors.otp?.message}
+          error={form.formState.errors.workspace_otp_code?.message}
         >
           <Input
-            id="otp"
+            id="workspace_otp_code"
             type="text"
             placeholder="123456"
-            invalid={Boolean(form.formState.errors.otp)}
-            {...form.register('otp')}
+            invalid={Boolean(form.formState.errors.workspace_otp_code)}
+            {...form.register('workspace_otp_code')}
           />
         </FormField>
 
         <FormField
-          htmlFor="password"
+          htmlFor="workspace_user_password"
           label="Nueva contraseña"
-          error={form.formState.errors.password?.message}
+          error={form.formState.errors.workspace_user_password?.message}
         >
           <Input
-            id="password"
+            id="workspace_user_password"
             type="password"
             placeholder="••••••••"
             autoComplete="new-password"
-            invalid={Boolean(form.formState.errors.password)}
-            {...form.register('password')}
+            invalid={Boolean(form.formState.errors.workspace_user_password)}
+            {...form.register('workspace_user_password')}
           />
         </FormField>
 
         <FormField
-          htmlFor="passwordConfirmation"
+          htmlFor="workspace_user_password_confirmation"
           label="Confirmar contraseña"
-          error={form.formState.errors.passwordConfirmation?.message}
+          error={form.formState.errors.workspace_user_password_confirmation?.message}
         >
           <Input
-            id="passwordConfirmation"
+            id="workspace_user_password_confirmation"
             type="password"
             placeholder="••••••••"
             autoComplete="new-password"
-            invalid={Boolean(form.formState.errors.passwordConfirmation)}
-            {...form.register('passwordConfirmation')}
+            invalid={Boolean(form.formState.errors.workspace_user_password_confirmation)}
+            {...form.register('workspace_user_password_confirmation')}
           />
         </FormField>
 

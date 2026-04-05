@@ -21,15 +21,18 @@ export function ForgotPasswordPage() {
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: '',
+      workspace_user_email: '',
     },
   })
 
   async function onSubmit(values: ForgotPasswordFormValues) {
-    await forgotPasswordMutation.mutateAsync(values)
+    const response = await forgotPasswordMutation.mutateAsync(values)
     navigate({
       pathname: APP_ROUTES.verifyOtp,
-      search: createSearchParams({ email: values.email }).toString(),
+      search: createSearchParams({
+        workspace_otp_email: values.workspace_user_email,
+        workspace_otp_purpose: response.workspace_otp.workspace_otp_purpose,
+      }).toString(),
     })
   }
 
@@ -41,18 +44,18 @@ export function ForgotPasswordPage() {
     >
       <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
-          htmlFor="email"
+          htmlFor="workspace_user_email"
           label="Correo"
-          error={form.formState.errors.email?.message}
+          error={form.formState.errors.workspace_user_email?.message}
           hint="El backend enviará el OTP al correo asociado."
         >
           <Input
-            id="email"
+            id="workspace_user_email"
             type="email"
             placeholder="correo@ucebul.com"
             autoComplete="email"
-            invalid={Boolean(form.formState.errors.email)}
-            {...form.register('email')}
+            invalid={Boolean(form.formState.errors.workspace_user_email)}
+            {...form.register('workspace_user_email')}
           />
         </FormField>
 

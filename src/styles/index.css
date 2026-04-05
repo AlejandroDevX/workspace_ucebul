@@ -11,6 +11,12 @@
 @import './components/data-table.css';
 @import './components/feedback.css';
 @import './components/modal.css';
+@import './components/drawer.css';
+@import './components/crud.css';
+@import './components/status-badge.css';
+@import './components/search-select.css';
+@import './components/switch.css';
+@import './components/permissions.css';
 @import './pages/login.css';
 @import './pages/dashboard.css';
 @import './pages/profile.css';

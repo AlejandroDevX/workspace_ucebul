@@ -21,8 +21,9 @@ export function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      workspace_user_email: '',
+      workspace_user_password: '',
+      workspace_personal_access_token_name: 'workspace_access_token',
     },
   })
 
@@ -39,32 +40,32 @@ export function LoginPage() {
     >
       <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
-          htmlFor="email"
+          htmlFor="workspace_user_email"
           label="Correo"
-          error={form.formState.errors.email?.message}
+          error={form.formState.errors.workspace_user_email?.message}
         >
           <Input
-            id="email"
+            id="workspace_user_email"
             type="email"
             placeholder="correo@ucebul.com"
             autoComplete="email"
-            invalid={Boolean(form.formState.errors.email)}
-            {...form.register('email')}
+            invalid={Boolean(form.formState.errors.workspace_user_email)}
+            {...form.register('workspace_user_email')}
           />
         </FormField>
 
         <FormField
-          htmlFor="password"
+          htmlFor="workspace_user_password"
           label="Contraseña"
-          error={form.formState.errors.password?.message}
+          error={form.formState.errors.workspace_user_password?.message}
         >
           <Input
-            id="password"
+            id="workspace_user_password"
             type="password"
             placeholder="••••••••"
             autoComplete="current-password"
-            invalid={Boolean(form.formState.errors.password)}
-            {...form.register('password')}
+            invalid={Boolean(form.formState.errors.workspace_user_password)}
+            {...form.register('workspace_user_password')}
           />
         </FormField>
 

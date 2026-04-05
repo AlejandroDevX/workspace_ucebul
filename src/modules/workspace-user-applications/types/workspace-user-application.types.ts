@@ -1,26 +1,25 @@
-import type { PaginationFilters } from '@/types/api'
+import type { WorkspaceApplication } from '@/modules/workspace-applications/types/workspace-application.types'
+import type { WorkspaceUser } from '@/modules/workspace-users/types/workspace-user.types'
 import type { EntityId } from '@/types/common'
 
-export interface WorkspaceUserApplicationAccess {
-  id: EntityId
-  userId: EntityId
-  applicationId: EntityId
-  userName?: string
-  applicationName?: string
-  status?: 'active' | 'inactive'
+export interface WorkspaceUserApplication {
+  workspace_user_application_id: EntityId
+  workspace_user_application_workspace_user_id: EntityId
+  workspace_user_application_workspace_application_id: EntityId
+  workspace_user_application_is_active: boolean
+  workspace_user?: WorkspaceUser
+  workspace_application?: WorkspaceApplication
+  workspace_user_application_created_at?: string
+  workspace_user_application_updated_at?: string
 }
 
-export interface WorkspaceUserApplicationFilters extends PaginationFilters {
-  userId?: EntityId
-  applicationId?: EntityId
-}
+export interface WorkspaceUserApplicationFilters {}
 
 export interface CreateWorkspaceUserApplicationDto {
-  userId: EntityId
-  applicationId: EntityId
+  workspace_user_application_workspace_user_id: string
+  workspace_user_application_workspace_application_id: string
+  workspace_user_application_is_active: boolean
 }
 
 export interface UpdateWorkspaceUserApplicationDto
-  extends Partial<CreateWorkspaceUserApplicationDto> {
-  status?: 'active' | 'inactive'
-}
+  extends CreateWorkspaceUserApplicationDto {}

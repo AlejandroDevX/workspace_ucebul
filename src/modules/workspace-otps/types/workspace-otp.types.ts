@@ -1,25 +1,26 @@
-import type { PaginationFilters } from '@/types/api'
 import type { EntityId } from '@/types/common'
 
-export interface WorkspaceOtpItem {
-  id: EntityId
-  email: string
-  purpose?: string
-  status?: 'pending' | 'verified' | 'expired'
-  expiresAt?: string
-  verifiedAt?: string
+export interface WorkspaceOtp {
+  workspace_otp_id: EntityId
+  workspace_otp_workspace_user_id?: EntityId | null
+  workspace_otp_email: string
+  workspace_otp_code: string
+  workspace_otp_purpose: string
+  workspace_otp_expires_at: string
+  workspace_otp_used_at?: string | null
+  workspace_otp_created_at?: string
+  workspace_otp_updated_at?: string
 }
 
-export interface WorkspaceOtpFilters extends PaginationFilters {
-  email?: string
-  status?: 'pending' | 'verified' | 'expired'
-}
+export interface WorkspaceOtpFilters {}
 
 export interface CreateWorkspaceOtpDto {
-  email: string
-  purpose?: string
+  workspace_otp_workspace_user_id?: EntityId | null
+  workspace_otp_email: string
+  workspace_otp_code: string
+  workspace_otp_purpose: string
+  workspace_otp_expires_at: string
+  workspace_otp_used_at?: string | null
 }
 
-export interface UpdateWorkspaceOtpDto extends Partial<CreateWorkspaceOtpDto> {
-  status?: 'pending' | 'verified' | 'expired'
-}
+export interface UpdateWorkspaceOtpDto extends CreateWorkspaceOtpDto {}

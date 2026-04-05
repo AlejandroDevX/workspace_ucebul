@@ -6,14 +6,40 @@ import { APP_ROUTES } from '@/routes/paths'
 import { useAuthStore } from '@/store/auth.store'
 
 function resolvePageTitle(pathname: string) {
-  switch (pathname) {
-    case APP_ROUTES.profile:
-      return 'Perfil'
-    case APP_ROUTES.unauthorized:
-      return 'Acceso restringido'
-    default:
-      return 'Dashboard'
+  if (pathname.startsWith(APP_ROUTES.users)) return 'Usuarios'
+  if (pathname.startsWith(APP_ROUTES.roles)) return 'Roles'
+  if (pathname.startsWith(APP_ROUTES.applications)) return 'Aplicaciones'
+  if (pathname.startsWith(APP_ROUTES.userRoles)) return 'Roles de usuario'
+  if (pathname.startsWith(APP_ROUTES.userApplications)) return 'Accesos por aplicación'
+  if (pathname.startsWith(APP_ROUTES.applicationPermissions)) return 'Permisos por aplicación'
+  if (pathname.startsWith(APP_ROUTES.userApplicationPermissions)) return 'Permisos de usuario en app'
+  if (pathname.startsWith(APP_ROUTES.otps)) return 'OTPs'
+  if (pathname === APP_ROUTES.profile) return 'Perfil'
+  if (pathname === APP_ROUTES.unauthorized) return 'Acceso restringido'
+  if (pathname === APP_ROUTES.dashboard) return 'Dashboard'
+  return 'Workspace'
+}
+
+function resolvePageEyebrow(pathname: string) {
+  if (
+    pathname.startsWith(APP_ROUTES.roles) ||
+    pathname.startsWith(APP_ROUTES.applications) ||
+    pathname.startsWith(APP_ROUTES.otps)
+  ) {
+    return 'Super admin workspace panel'
   }
+
+  if (
+    pathname.startsWith(APP_ROUTES.users) ||
+    pathname.startsWith(APP_ROUTES.userRoles) ||
+    pathname.startsWith(APP_ROUTES.userApplications) ||
+    pathname.startsWith(APP_ROUTES.applicationPermissions) ||
+    pathname.startsWith(APP_ROUTES.userApplicationPermissions)
+  ) {
+    return 'Admin workspace panel'
+  }
+
+  return 'Workspace control panel'
 }
 
 export function Topbar() {
@@ -33,7 +59,7 @@ export function Topbar() {
   return (
     <header className="topbar">
       <div>
-        <p className="topbar__eyebrow">Workspace control panel</p>
+        <p className="topbar__eyebrow">{resolvePageEyebrow(location.pathname)}</p>
         <h2 className="topbar__title">{resolvePageTitle(location.pathname)}</h2>
       </div>
 

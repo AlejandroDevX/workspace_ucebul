@@ -1,22 +1,16 @@
-import type { PaginationFilters } from '@/types/api'
 import type { EntityId } from '@/types/common'
 
-export interface WorkspaceRoleItem {
-  id: EntityId
-  name: string
-  description?: string
-  isSystem?: boolean
+export interface WorkspaceRole {
+  workspace_role_id: EntityId
+  workspace_role_name: string
+  workspace_role_created_at?: string
+  workspace_role_updated_at?: string
 }
 
-export interface WorkspaceRoleFilters extends PaginationFilters {
-  isSystem?: boolean
-}
+export interface WorkspaceRoleFilters {}
 
 export interface CreateWorkspaceRoleDto {
-  name: string
-  description?: string
+  workspace_role_name: string
 }
 
-export interface UpdateWorkspaceRoleDto extends Partial<CreateWorkspaceRoleDto> {
-  isSystem?: boolean
-}
+export interface UpdateWorkspaceRoleDto extends CreateWorkspaceRoleDto {}

@@ -1,12 +1,75 @@
-import { useQuery } from '@tanstack/react-query'
-import { workspaceUserApplicationsService } from '@/modules/workspace-user-applications/api/workspace-user-applications.service'
-import type { WorkspaceUserApplicationFilters } from '@/modules/workspace-user-applications/types/workspace-user-application.types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  createWorkspaceUserApplication,
+  deleteWorkspaceUserApplication,
+  getWorkspaceUserApplicationById,
+  listWorkspaceUserApplications,
+  updateWorkspaceUserApplication,
+} from '@/modules/workspace-user-applications/api/workspace-user-applications.service'
+import type {
+  CreateWorkspaceUserApplicationDto,
+  UpdateWorkspaceUserApplicationDto,
+} from '@/modules/workspace-user-applications/types/workspace-user-application.types'
+import type { EntityId } from '@/types/common'
 
-export function useWorkspaceUserApplicationsQuery(
-  filters?: WorkspaceUserApplicationFilters,
-) {
+export const workspaceUserApplicationsQueryKey = ['workspace-user-applications'] as const
+
+export function useWorkspaceUserApplicationsQuery() {
   return useQuery({
-    queryKey: ['workspace-user-applications', filters],
-    queryFn: () => workspaceUserApplicationsService.list(filters),
+    queryKey: workspaceUserApplicationsQueryKey,
+    queryFn: listWorkspaceUserApplications,
+  })
+}
+
+export function useWorkspaceUserApplicationQuery(id?: EntityId) {
+  return useQuery({
+    queryKey: [...workspaceUserApplicationsQueryKey, id],
+    queryFn: () => getWorkspaceUserApplicationById(id!),
+    enabled: id !== undefined && id !== null && id !== '',
+  })
+}
+
+export function useCreateWorkspaceUserApplicationMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateWorkspaceUserApplicationDto) =>
+      createWorkspaceUserApplication(payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: workspaceUserApplicationsQueryKey })
+    },
+  })
+}
+
+export function useUpdateWorkspaceUserApplicationMutation(id: EntityId) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: UpdateWorkspaceUserApplicationDto) =>
+      updateWorkspaceUserApplication(id, payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: workspaceUserApplicationsQueryKey }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceUserApplicationsQueryKey, id],
+        }),
+      ])
+    },
+  })
+}
+
+export function useDeleteWorkspaceUserApplicationMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: EntityId) => deleteWorkspaceUserApplication(id),
+    onSuccess: async (_, id) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: workspaceUserApplicationsQueryKey }),
+        queryClient.removeQueries({
+          queryKey: [...workspaceUserApplicationsQueryKey, id],
+        }),
+      ])
+    },
   })
 }

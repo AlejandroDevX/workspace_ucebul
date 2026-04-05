@@ -7,14 +7,19 @@ import type {
   ResetPasswordDto,
   VerifyOtpDto,
   WorkspaceAuthUserResponse,
+  WorkspaceForgotPasswordResponseData,
   WorkspaceLoginRequest,
   WorkspaceLoginResponse,
+  WorkspaceResetPasswordResponseData,
+  WorkspaceValidateTokenData,
+  WorkspaceVerifyOtpResponseData,
 } from '@/modules/auth/types/auth.types'
 import type {
   AuthApplicationAccess,
   AuthUser,
   WorkspaceRole,
 } from '@/types/auth'
+import type { ApiSuccessResponse } from '@/types/api'
 import type { EntityId } from '@/types/common'
 import { isRecord } from '@/utils/is-record'
 import { unwrapData } from '@/utils/api-response'
@@ -37,6 +42,10 @@ function normalizeRoles(value: unknown): WorkspaceRole[] {
       if (isRecord(role)) {
         if (typeof role.name === 'string') {
           return role.name
+        }
+
+        if (isRecord(role.workspace_role) && typeof role.workspace_role.workspace_role_name === 'string') {
+          return role.workspace_role.workspace_role_name
         }
 
         if (typeof role.role_name === 'string') {
@@ -65,11 +74,18 @@ function normalizeApplications(value: unknown): AuthApplicationAccess[] {
       }
 
       const id = application.id as EntityId | undefined
+      const nestedApplication = isRecord(application.workspace_application)
+        ? application.workspace_application
+        : undefined
       const name =
         readString(application.name) ||
+        readString(nestedApplication?.workspace_application_name) ||
         readString(application.application_name) ||
         readString(application.workspace_application_name)
-      const slug = readString(application.slug) || undefined
+      const slug =
+        readString(application.slug) ||
+        readString(nestedApplication?.workspace_application_slug) ||
+        undefined
 
       return {
         id,
@@ -213,58 +229,89 @@ function extractTokenType(payload: unknown) {
 
 function mapLoginPayload(payload: LoginDto): WorkspaceLoginRequest {
   return {
-    workspace_user_email: payload.email,
-    workspace_user_password: payload.password,
-    ...(payload.personalAccessTokenName
+    workspace_user_email: payload.workspace_user_email,
+    workspace_user_password: payload.workspace_user_password,
+    ...(payload.workspace_personal_access_token_name
       ? {
-          workspace_personal_access_token_name: payload.personalAccessTokenName,
+          workspace_personal_access_token_name: payload.workspace_personal_access_token_name,
         }
       : {}),
   }
 }
 
+export async function loginWorkspaceUser(payload: LoginDto): Promise<LoginResult> {
+  const response = await httpClient.post<WorkspaceLoginResponse>(
+    '/auth/login',
+    mapLoginPayload(payload),
+  )
+
+  return {
+    token: extractToken(response.data),
+    tokenType: extractTokenType(response.data),
+    user: normalizeAuthUser(response.data),
+  }
+}
+
+export async function logoutWorkspaceUser() {
+  await httpClient.post<ApiSuccessResponse<null>>('/auth/logout')
+}
+
+export async function getAuthenticatedWorkspaceUser() {
+  const response = await httpClient.get<ApiSuccessResponse<WorkspaceAuthUserResponse>>(
+    '/auth/me',
+  )
+  const user = normalizeAuthUser(response.data)
+
+  if (!user) {
+    throw new ApiError('No fue posible resolver el usuario autenticado')
+  }
+
+  return user
+}
+
+export async function validateWorkspaceToken() {
+  const response = await httpClient.get<ApiSuccessResponse<WorkspaceValidateTokenData>>(
+    '/auth/validate-token',
+  )
+
+  return unwrapData<WorkspaceValidateTokenData>(response.data)
+}
+
+export async function forgotWorkspacePassword(payload: ForgotPasswordDto) {
+  const response = await httpClient.post<
+    ApiSuccessResponse<WorkspaceForgotPasswordResponseData>
+  >('/auth/forgot-password', payload)
+
+  return unwrapData<WorkspaceForgotPasswordResponseData>(response.data)
+}
+
+export async function verifyWorkspaceOtp(payload: VerifyOtpDto) {
+  const response = await httpClient.post<ApiSuccessResponse<WorkspaceVerifyOtpResponseData>>(
+    '/auth/verify-otp',
+    payload,
+  )
+
+  return unwrapData<WorkspaceVerifyOtpResponseData>(response.data)
+}
+
+export async function resetWorkspacePassword(payload: ResetPasswordDto) {
+  const response = await httpClient.post<ApiSuccessResponse<WorkspaceResetPasswordResponseData>>(
+    '/auth/reset-password',
+    {
+      ...payload,
+      workspace_otp_purpose: payload.workspace_otp_purpose ?? 'password_reset',
+    },
+  )
+
+  return unwrapData<WorkspaceResetPasswordResponseData>(response.data)
+}
+
 export const authService = {
-  async login(payload: LoginDto): Promise<LoginResult> {
-    const response = await httpClient.post<WorkspaceLoginResponse>(
-      '/auth/login',
-      mapLoginPayload(payload),
-    )
-
-    return {
-      token: extractToken(response.data),
-      tokenType: extractTokenType(response.data),
-      user: normalizeAuthUser(response.data),
-    }
-  },
-  async logout() {
-    await httpClient.post('/auth/logout')
-  },
-  async getMe() {
-    const response = await httpClient.get('/auth/me')
-    const user = normalizeAuthUser(response.data)
-
-    if (!user) {
-      throw new ApiError('No fue posible resolver el usuario autenticado')
-    }
-
-    return user
-  },
-  async validateToken() {
-    await httpClient.get('/auth/validate-token')
-    return true
-  },
-  async forgotPassword(payload: ForgotPasswordDto) {
-    await httpClient.post('/auth/forgot-password', payload)
-  },
-  async verifyOtp(payload: VerifyOtpDto) {
-    await httpClient.post('/auth/verify-otp', payload)
-  },
-  async resetPassword(payload: ResetPasswordDto) {
-    await httpClient.post('/auth/reset-password', {
-      email: payload.email,
-      otp: payload.otp,
-      password: payload.password,
-      password_confirmation: payload.passwordConfirmation,
-    })
-  },
+  login: loginWorkspaceUser,
+  logout: logoutWorkspaceUser,
+  getMe: getAuthenticatedWorkspaceUser,
+  validateToken: validateWorkspaceToken,
+  forgotPassword: forgotWorkspacePassword,
+  verifyOtp: verifyWorkspaceOtp,
+  resetPassword: resetWorkspacePassword,
 }

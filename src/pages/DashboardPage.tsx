@@ -29,26 +29,26 @@ const overviewCards = [
 
 const moduleReadiness = [
   {
-    id: 'workspace-users',
-    module: 'workspace-users',
+    id: 'users',
+    module: '/users',
     endpoint: '/workspace-users',
     state: 'Listo',
   },
   {
-    id: 'workspace-roles',
-    module: 'workspace-roles',
+    id: 'roles',
+    module: '/roles',
     endpoint: '/workspace-roles',
     state: 'Listo',
   },
   {
-    id: 'workspace-applications',
-    module: 'workspace-applications',
+    id: 'applications',
+    module: '/applications',
     endpoint: '/workspace-applications',
     state: 'Listo',
   },
   {
-    id: 'workspace-permissions',
-    module: 'workspace-permissions',
+    id: 'application-permissions',
+    module: '/application-permissions',
     endpoint: '/workspace-application-permissions',
     state: 'Listo',
   },
@@ -104,7 +104,7 @@ export function DashboardPage() {
           <DataTable<ModuleReadinessRow>
             caption="Estado de la base administrativa"
             columns={[
-              { key: 'module', header: 'Módulo', cell: (row) => row.module },
+              { key: 'module', header: 'Ruta SPA', cell: (row) => row.module },
               { key: 'endpoint', header: 'Endpoint', cell: (row) => row.endpoint },
               {
                 key: 'state',

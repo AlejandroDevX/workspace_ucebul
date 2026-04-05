@@ -27,8 +27,9 @@ export function VerifyOtpPage() {
   const form = useForm<VerifyOtpFormValues>({
     resolver: zodResolver(verifyOtpSchema),
     defaultValues: {
-      email: searchParams.get('email') ?? '',
-      otp: '',
+      workspace_otp_email: searchParams.get('workspace_otp_email') ?? '',
+      workspace_otp_code: '',
+      workspace_otp_purpose: searchParams.get('workspace_otp_purpose') ?? 'password_reset',
     },
   })
 
@@ -37,8 +38,9 @@ export function VerifyOtpPage() {
     navigate({
       pathname: APP_ROUTES.resetPassword,
       search: createSearchParams({
-        email: values.email,
-        otp: values.otp,
+        workspace_otp_email: values.workspace_otp_email,
+        workspace_otp_code: values.workspace_otp_code,
+        workspace_otp_purpose: values.workspace_otp_purpose,
       }).toString(),
     })
   }
@@ -51,32 +53,32 @@ export function VerifyOtpPage() {
     >
       <form className="auth-form" onSubmit={form.handleSubmit(onSubmit)}>
         <FormField
-          htmlFor="email"
+          htmlFor="workspace_otp_email"
           label="Correo"
-          error={form.formState.errors.email?.message}
+          error={form.formState.errors.workspace_otp_email?.message}
         >
           <Input
-            id="email"
+            id="workspace_otp_email"
             type="email"
             placeholder="correo@ucebul.com"
             autoComplete="email"
-            invalid={Boolean(form.formState.errors.email)}
-            {...form.register('email')}
+            invalid={Boolean(form.formState.errors.workspace_otp_email)}
+            {...form.register('workspace_otp_email')}
           />
         </FormField>
 
         <FormField
-          htmlFor="otp"
+          htmlFor="workspace_otp_code"
           label="Código OTP"
-          error={form.formState.errors.otp?.message}
+          error={form.formState.errors.workspace_otp_code?.message}
           hint="Usa el código exacto entregado por el backend."
         >
           <Input
-            id="otp"
+            id="workspace_otp_code"
             type="text"
             placeholder="123456"
-            invalid={Boolean(form.formState.errors.otp)}
-            {...form.register('otp')}
+            invalid={Boolean(form.formState.errors.workspace_otp_code)}
+            {...form.register('workspace_otp_code')}
           />
         </FormField>
 

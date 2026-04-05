@@ -1,27 +1,26 @@
-import type { PaginationFilters } from '@/types/api'
-import type { WorkspaceRole } from '@/types/auth'
 import type { EntityId } from '@/types/common'
 
-export interface WorkspaceUserItem {
-  id: EntityId
-  name: string
-  email: string
-  status?: 'active' | 'inactive'
-  roles: WorkspaceRole[]
-  createdAt?: string
+export interface WorkspaceUser {
+  workspace_user_id: EntityId
+  workspace_user_email: string
+  workspace_user_name: string
+  workspace_user_last_name: string
+  workspace_user_created_at?: string
+  workspace_user_updated_at?: string
 }
 
-export interface WorkspaceUserFilters extends PaginationFilters {
-  role?: WorkspaceRole
-  status?: 'active' | 'inactive'
-}
+export interface WorkspaceUserFilters {}
 
 export interface CreateWorkspaceUserDto {
-  name: string
-  email: string
-  password?: string
+  workspace_user_email: string
+  workspace_user_password: string
+  workspace_user_name: string
+  workspace_user_last_name: string
 }
 
-export interface UpdateWorkspaceUserDto extends Partial<CreateWorkspaceUserDto> {
-  status?: 'active' | 'inactive'
+export interface UpdateWorkspaceUserDto {
+  workspace_user_email: string
+  workspace_user_password?: string
+  workspace_user_name: string
+  workspace_user_last_name: string
 }

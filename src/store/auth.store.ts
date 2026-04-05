@@ -58,7 +58,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       })
 
       try {
-        await authService.validateToken()
+        const validation = await authService.validateToken()
+
+        if (!validation.is_valid) {
+          throw new Error('Token inválido')
+        }
+
         const user = await authService.getMe()
 
         set({
