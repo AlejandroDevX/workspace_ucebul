@@ -1,0 +1,37 @@
+.data-table {
+  overflow-x: auto;
+}
+
+.data-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table caption {
+  padding-bottom: var(--space-4);
+  text-align: left;
+  color: var(--color-text-soft);
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.95rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.data-table th {
+  color: var(--color-text-soft);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.data-table--empty {
+  padding: var(--space-4) 0;
+}

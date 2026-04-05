@@ -1,0 +1,13 @@
+import { QueryClientProvider } from '@tanstack/react-query'
+import type { PropsWithChildren } from 'react'
+import { AppBootstrap } from '@/app/providers/AppBootstrap'
+import { queryClient } from '@/lib/query-client'
+
+export function AppProviders({ children }: PropsWithChildren) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppBootstrap />
+      {children}
+    </QueryClientProvider>
+  )
+}

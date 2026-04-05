@@ -1,0 +1,48 @@
+.dashboard-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.dashboard-content-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--space-4);
+}
+
+.dashboard-metric-card {
+  min-height: 12rem;
+}
+
+.dashboard-metric-card__icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: rgba(20, 93, 160, 0.1);
+  color: var(--color-primary);
+}
+
+.dashboard-metric-card h2 {
+  font-size: 1.1rem;
+}
+
+.dashboard-metric-card p {
+  color: var(--color-text-soft);
+  line-height: 1.7;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-overview-grid,
+  .dashboard-content-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-overview-grid,
+  .dashboard-content-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,52 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at top left, rgba(20, 93, 160, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(226, 124, 62, 0.12), transparent 24%),
+    var(--color-bg);
+  color: var(--color-text);
+}
+
+body,
+button,
+input {
+  font: inherit;
+}
+
+button,
+input {
+  border: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+ul,
+ol,
+dl,
+p,
+h1,
+h2,
+h3 {
+  margin: 0;
+}

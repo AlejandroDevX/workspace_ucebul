@@ -1,0 +1,69 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(18px);
+}
+
+.topbar__eyebrow {
+  color: var(--color-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+}
+
+.topbar__title {
+  margin-top: var(--space-2);
+  font-size: 1.4rem;
+}
+
+.topbar__actions,
+.topbar__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.topbar__identity {
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.topbar__identity-icon {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(20, 93, 160, 0.12);
+  color: var(--color-primary);
+}
+
+.topbar__identity strong,
+.topbar__identity span {
+  display: block;
+}
+
+.topbar__identity span {
+  color: var(--color-text-soft);
+  font-size: 0.83rem;
+}
+
+@media (max-width: 720px) {
+  .topbar,
+  .topbar__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .topbar__identity {
+    width: 100%;
+  }
+}

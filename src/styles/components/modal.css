@@ -1,0 +1,46 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: rgba(16, 24, 40, 0.44);
+}
+
+.modal {
+  width: min(100%, 36rem);
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-strong);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal__header,
+.modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.modal__title {
+  font-size: 1.2rem;
+}
+
+.modal__description {
+  margin-top: var(--space-2);
+  color: var(--color-text-soft);
+}
+
+.modal__content {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.modal__close {
+  min-width: 2.5rem;
+  padding-inline: 0.7rem;
+}

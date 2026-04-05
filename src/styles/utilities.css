@@ -1,0 +1,79 @@
+.page-stack {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.page-center {
+  min-height: calc(100vh - 12rem);
+  display: grid;
+  place-items: center;
+}
+
+.text-muted {
+  color: var(--color-text-soft);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(20, 93, 160, 0.1);
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.feature-list {
+  padding-left: 1rem;
+  display: grid;
+  gap: var(--space-3);
+  color: var(--color-text-soft);
+}
+
+.status-card {
+  text-align: center;
+  max-width: 28rem;
+}
+
+.status-card__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: inline-grid;
+  place-items: center;
+  margin: 0 auto var(--space-4);
+  border-radius: 50%;
+  background: rgba(20, 93, 160, 0.12);
+  color: var(--color-primary);
+}
+
+.link-inline {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.detail-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.detail-list div {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.detail-list dt {
+  color: var(--color-text-soft);
+  font-size: 0.875rem;
+}
+
+.detail-list dd {
+  font-weight: 600;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

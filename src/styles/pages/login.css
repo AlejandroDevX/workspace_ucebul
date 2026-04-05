@@ -1,0 +1,12 @@
+.auth-card {
+  width: min(100%, 29rem);
+}
+
+.auth-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.auth-form__footer {
+  text-align: center;
+}
