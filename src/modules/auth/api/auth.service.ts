@@ -86,11 +86,33 @@ function normalizeApplications(value: unknown): AuthApplicationAccess[] {
         readString(application.slug) ||
         readString(nestedApplication?.workspace_application_slug) ||
         undefined
+      const description =
+        readString(nestedApplication?.workspace_application_description) ||
+        readString(application.description) ||
+        undefined
+      const logoUrl =
+        readString(nestedApplication?.workspace_application_logo_url) ||
+        readString(application.logo_url) ||
+        undefined
+      const url =
+        readString(nestedApplication?.workspace_application_url) ||
+        readString(application.url) ||
+        undefined
+      const isActive =
+        typeof nestedApplication?.workspace_application_is_active === 'boolean'
+          ? nestedApplication.workspace_application_is_active
+          : typeof application.is_active === 'boolean'
+            ? application.is_active
+            : undefined
 
       return {
         id,
         name: name || undefined,
         slug,
+        description,
+        logoUrl,
+        url,
+        isActive,
       }
     })
     .filter((application): application is AuthApplicationAccess => application !== null)

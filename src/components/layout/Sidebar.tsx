@@ -17,7 +17,15 @@ function hasAnyRole(userRoles: string[], expectedRoles: string[]) {
   return expectedRoles.some((role) => userRoles.includes(role))
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean
+  onCollapsedChange: (collapsed: boolean) => void
+}
+
+export function Sidebar({
+  collapsed,
+  onCollapsedChange,
+}: SidebarProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const roles = useAuthStore((state) => state.user?.roles ?? [])
@@ -117,6 +125,8 @@ export function Sidebar() {
 
   return (
     <FoundationSidebar
+      collapsible
+      collapsed={collapsed}
       footer={
         <>
           <AppWindow size={16} />
@@ -126,12 +136,15 @@ export function Sidebar() {
       header={
         <div className="sidebar__brand">
           <span className="sidebar__brand-mark">UW</span>
-          <div>
-            <p className="sidebar__eyebrow">Ucebul Ecosystem</p>
-            <h1 className="sidebar__title">Workspace</h1>
-          </div>
+          {!collapsed ? (
+            <div>
+              <p className="sidebar__eyebrow">Ucebul Ecosystem</p>
+              <h1 className="sidebar__title">Workspace</h1>
+            </div>
+          ) : null}
         </div>
       }
+      onCollapsedChange={onCollapsedChange}
       sections={sections}
     />
   )

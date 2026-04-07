@@ -1,140 +1,171 @@
-import { Activity, Shield, Users, Workflow } from 'lucide-react'
+import { ArrowUpRight, Blocks, Sparkles } from 'lucide-react'
+import { Button } from '@/components/base/Button'
 import { Card } from '@/components/base/Card'
-import { DataTable } from '@/components/base/DataTable'
-import { PageHeader } from '@/components/base/PageHeader'
+import { EmptyState } from '@/components/feedback/EmptyState'
 import { PermissionBadge } from '@/components/feedback/PermissionBadge'
+import { PageHeader } from '@/components/base/PageHeader'
 import { StatusBadge } from '@/components/feedback/StatusBadge'
 import { useAuthStore } from '@/store/auth.store'
+import type { AuthApplicationAccess } from '@/types/auth'
 
-const overviewCards = [
-  {
-    title: 'Usuarios globales',
-    description: 'Gestiona identidad, acceso y lifecycle desde una sola capa de workspace.',
-    icon: Users,
-  },
-  {
-    title: 'Roles y permisos',
-    description: 'La arquitectura ya contempla guards globales, admin y super admin.',
-    icon: Shield,
-  },
-  {
-    title: 'Aplicaciones conectadas',
-    description: 'La base permite extender accesos y permisos por app sin rehacer la SPA.',
-    icon: Workflow,
-  },
-  {
-    title: 'Sesión y seguridad',
-    description: 'Token, validación de sesión y recuperación por OTP quedan centralizados.',
-    icon: Activity,
-  },
-] as const
+function getAllowedApplications(applications?: AuthApplicationAccess[]) {
+  const uniqueApplications = new Map<string, AuthApplicationAccess>()
 
-const moduleReadiness = [
-  {
-    id: 'users',
-    module: '/users',
-    endpoint: '/workspace-users',
-    state: 'Listo',
-  },
-  {
-    id: 'roles',
-    module: '/roles',
-    endpoint: '/workspace-roles',
-    state: 'Listo',
-  },
-  {
-    id: 'applications',
-    module: '/applications',
-    endpoint: '/workspace-applications',
-    state: 'Listo',
-  },
-  {
-    id: 'application-permissions',
-    module: '/application-permissions',
-    endpoint: '/workspace-application-permissions',
-    state: 'Listo',
-  },
-] as const
+  for (const application of applications ?? []) {
+    const key = String(application.id ?? application.slug ?? application.name ?? '')
 
-type ModuleReadinessRow = (typeof moduleReadiness)[number]
+    if (!key) {
+      continue
+    }
+
+    if (!uniqueApplications.has(key)) {
+      uniqueApplications.set(key, application)
+    }
+  }
+
+  return [...uniqueApplications.values()]
+}
+
+function getApplicationInitials(application: AuthApplicationAccess) {
+  const source = application.name ?? application.slug ?? 'App'
+
+  return source
+    .split(/[\s-_]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
 
 export function DashboardPage() {
   const user = useAuthStore((state) => state.user)
+  const applications = getAllowedApplications(user?.applications)
 
   return (
     <div className="page-stack">
       <PageHeader
-        eyebrow="Workspace overview"
+        eyebrow="Workspace"
         title={`Hola, ${user?.name ?? 'equipo Ucebul'}`}
-        description="La base del frontend quedó organizada por dominio, preparada para crecer sin acoplar la UI temporal al backend."
+        description="Tu espacio de trabajo muestra únicamente las aplicaciones habilitadas para esta sesión."
       />
 
-      <section className="dashboard-overview-grid">
-        {overviewCards.map((item) => {
-          const Icon = item.icon
-
-          return (
-            <Card key={item.title} className="dashboard-metric-card">
-              <div className="dashboard-metric-card__icon">
-                <Icon size={18} />
-              </div>
-              <h2>{item.title}</h2>
-              <p>{item.description}</p>
-            </Card>
-          )
-        })}
-      </section>
-
-      <section className="dashboard-content-grid">
-        <Card
-          title="Arquitectura inicial"
-          description="Decisiones aplicadas para mantener desacoplamiento, mantenibilidad y crecimiento por módulos."
-        >
-          <ul className="feature-list">
-            <li>Router con guards públicos, autenticados y por rol global.</li>
-            <li>Store de auth en Zustand solo para estado verdaderamente transversal.</li>
-            <li>React Query reservado para estado servidor y mutaciones remotas.</li>
-            <li>Axios encapsulado en servicios y normalizadores, no en componentes visuales.</li>
-            <li>CSS puro con tokens globales y componentes visuales reemplazables.</li>
-          </ul>
+      <section className="dashboard-hero-grid">
+        <Card className="dashboard-hero-card">
+          <div className="dashboard-hero-card__eyebrow">
+            <Sparkles size={16} />
+            <span>Acceso personalizado</span>
+          </div>
+          <h2>Aplicaciones disponibles para ti</h2>
+          <p>
+            El dashboard filtra tu experiencia según los accesos activos del Workspace.
+          </p>
+          <div className="dashboard-hero-card__stats">
+            <div>
+              <strong>{applications.length}</strong>
+              <span>aplicaciones permitidas</span>
+            </div>
+            <div>
+              <strong>{(user?.roles ?? []).length}</strong>
+              <span>roles globales resueltos</span>
+            </div>
+          </div>
         </Card>
 
         <Card
-          title="Módulos administrativos"
-          description="Cada dominio queda con tipos, servicio y hooks base para empezar a conectar vistas reales."
+          className="dashboard-side-card"
+          title="Tu sesión"
+          description="Resumen rápido del acceso actual."
         >
-          <DataTable<ModuleReadinessRow>
-            caption="Estado de la base administrativa"
-            columns={[
-              { key: 'module', header: 'Ruta SPA', cell: (row) => row.module },
-              { key: 'endpoint', header: 'Endpoint', cell: (row) => row.endpoint },
-              {
-                key: 'state',
-                header: 'Estado',
-                cell: (row) => <StatusBadge label={row.state} tone="success" />,
-              },
-            ]}
-            data={moduleReadiness}
-            getRowId={(row) => row.id}
-          />
-        </Card>
-
-        <Card
-          title="Foundation UI adoptado"
-          description="Base compartida ya alineada con la librería instalada."
-        >
-          <div className="tag-list">
-            <PermissionBadge label="ThemeProvider + themes" />
-            <PermissionBadge label="Primitives" />
-            <PermissionBadge label="Feedback states" />
-            <PermissionBadge label="Overlays" />
-            <PermissionBadge label="Searchable selects" />
-            <PermissionBadge label="RHF wrappers" />
-            <PermissionBadge label="Sidebar / Topbar" />
-            <PermissionBadge label="DataTable" />
+          <div className="dashboard-side-card__stack">
+            <div className="dashboard-side-card__item">
+              <span>Usuario</span>
+              <strong>{user?.email ?? 'Sin correo disponible'}</strong>
+            </div>
+            <div className="dashboard-side-card__item">
+              <span>Acceso</span>
+              <StatusBadge
+                label={applications.length > 0 ? 'Disponible' : 'Sin apps'}
+                tone={applications.length > 0 ? 'success' : 'warning'}
+              />
+            </div>
+            <div className="tag-list">
+              {(user?.roles ?? []).map((role) => (
+                <PermissionBadge key={role} label={role} />
+              ))}
+            </div>
           </div>
         </Card>
       </section>
+
+      <Card
+        title="Aplicaciones permitidas"
+        description="Accesos disponibles para el usuario autenticado en este momento."
+      >
+        {applications.length > 0 ? (
+          <div className="dashboard-apps-grid">
+            {applications.map((application) => (
+              <article
+                key={String(application.id ?? application.slug ?? application.name)}
+                className="dashboard-app-card"
+              >
+                <div className="dashboard-app-card__header">
+                  <div className="dashboard-app-card__brand">
+                    {application.logoUrl ? (
+                      <img
+                        className="dashboard-app-card__logo"
+                        src={application.logoUrl}
+                        alt={`Logo de ${application.name ?? application.slug ?? 'la aplicación'}`}
+                      />
+                    ) : (
+                      <div className="dashboard-app-card__logo dashboard-app-card__logo--fallback">
+                        {getApplicationInitials(application)}
+                      </div>
+                    )}
+
+                    <div className="dashboard-app-card__copy">
+                      <h3>{application.name ?? 'Aplicación sin nombre'}</h3>
+                      <p>{application.description ?? 'Acceso disponible en tu workspace.'}</p>
+                    </div>
+                  </div>
+
+                  <StatusBadge
+                    label={application.isActive === false ? 'Inactiva' : 'Activa'}
+                    tone={application.isActive === false ? 'warning' : 'success'}
+                  />
+                </div>
+
+                <div className="dashboard-app-card__meta">
+                  {application.slug ? <PermissionBadge label={application.slug} /> : null}
+                  <PermissionBadge label="Acceso permitido" />
+                </div>
+
+                {application.url ? (
+                  <div className="dashboard-app-card__actions">
+                    <Button
+                      rightIcon={<ArrowUpRight size={16} />}
+                      onClick={() => window.open(application.url, '_blank', 'noopener,noreferrer')}
+                      variant="secondary"
+                    >
+                      Abrir aplicación
+                    </Button>
+                  </div>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="Sin aplicaciones asignadas"
+            description="Tu usuario aún no tiene accesos activos a aplicaciones dentro del Workspace."
+            action={
+              <div className="dashboard-empty-state__action">
+                <Blocks size={16} />
+                <span>Solicita acceso a un administrador del Workspace.</span>
+              </div>
+            }
+          />
+        )}
+      </Card>
     </div>
   )
 }

@@ -4,9 +4,18 @@ import {
   ucebulDarkTheme,
   ucebulLightTheme,
 } from 'foundation-ui'
-import type { PropsWithChildren } from 'react'
+import { type PropsWithChildren, useEffect } from 'react'
+import { ensurePortalRoot } from 'foundation-ui/utils/portal'
 import { AppBootstrap } from '@/app/providers/AppBootstrap'
 import { queryClient } from '@/lib/query-client'
+
+function FoundationPortalRoot() {
+  useEffect(() => {
+    ensurePortalRoot()
+  }, [])
+
+  return null
+}
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
@@ -15,6 +24,7 @@ export function AppProviders({ children }: PropsWithChildren) {
         defaultThemeId={ucebulLightTheme.id}
         themes={[ucebulLightTheme, ucebulDarkTheme]}
       >
+        <FoundationPortalRoot />
         <AppBootstrap />
         {children}
       </ThemeProvider>

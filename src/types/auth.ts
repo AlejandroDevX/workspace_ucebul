@@ -8,6 +8,10 @@ export interface AuthApplicationAccess {
   id?: EntityId
   name?: string
   slug?: string
+  description?: string | null
+  logoUrl?: string | null
+  url?: string
+  isActive?: boolean
 }
 
 export interface AuthUser {

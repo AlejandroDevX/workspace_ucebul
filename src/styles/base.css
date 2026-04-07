@@ -20,6 +20,19 @@ body {
   color: var(--color-text);
 }
 
+.fui-theme-root [data-fui-portal-root='true'] {
+  position: relative;
+  z-index: 2000;
+}
+
+.fui-theme-root [data-fui-portal-root='true'] .fui-floating-layer {
+  z-index: 2100 !important;
+}
+
+.fui-theme-root [data-fui-portal-root='true'] .fui-floating-layer--tooltip {
+  z-index: 2200 !important;
+}
+
 body,
 button,
 input {
