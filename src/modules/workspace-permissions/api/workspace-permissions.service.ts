@@ -4,6 +4,7 @@ import type {
   CreateWorkspaceApplicationPermissionDto,
   CreateWorkspaceApplicationRolePermissionDto,
   CreateWorkspaceUserApplicationPermissionDto,
+  ApplicationPermissionsTree,
   UpdateWorkspaceApplicationPermissionDto,
   UpdateWorkspaceApplicationRolePermissionDto,
   UpdateWorkspaceUserApplicationPermissionDto,
@@ -18,6 +19,19 @@ export async function listWorkspaceApplicationPermissions() {
     '/workspace-application-permissions',
   )
   return unwrapData<WorkspaceApplicationPermission[]>(response.data)
+}
+
+export async function getApplicationPermissionsTree() {
+  const response = await httpClient.get<ApiSuccessResponse<ApplicationPermissionsTree[]>>(
+    '/workspace-application-permissions',
+    {
+      params: {
+        grouped_by: 'application_module',
+      },
+    },
+  )
+
+  return unwrapData<ApplicationPermissionsTree[]>(response.data)
 }
 
 export async function createWorkspaceApplicationPermission(
@@ -132,6 +146,7 @@ export async function deleteWorkspaceUserApplicationPermission(id: number | stri
 
 export const workspaceApplicationPermissionsService = {
   list: listWorkspaceApplicationPermissions,
+  tree: getApplicationPermissionsTree,
   create: createWorkspaceApplicationPermission,
   getById: getWorkspaceApplicationPermissionById,
   update: updateWorkspaceApplicationPermission,

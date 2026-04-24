@@ -3,8 +3,10 @@ import {
   createWorkspaceApplicationRole,
   deleteWorkspaceApplicationRole,
   getWorkspaceApplicationRoleById,
+  getWorkspaceApplicationRolePermissionsTree,
   listWorkspaceApplicationRoles,
   updateWorkspaceApplicationRole,
+  updateWorkspaceApplicationRolePermissions,
 } from '@/modules/workspace-application-roles/api/workspace-application-roles.service'
 import type {
   CreateWorkspaceApplicationRoleDto,
@@ -49,6 +51,39 @@ export function useWorkspaceApplicationRoleQuery(id?: EntityId) {
     queryKey: [...workspaceApplicationRolesQueryKey, id],
     queryFn: () => getWorkspaceApplicationRoleById(id!),
     enabled: id !== undefined && id !== null && id !== '',
+  })
+}
+
+export function useWorkspaceApplicationRolePermissionsTreeQuery(id?: EntityId) {
+  return useQuery({
+    queryKey: [...workspaceApplicationRolesQueryKey, id, 'permissions-tree'],
+    queryFn: () => getWorkspaceApplicationRolePermissionsTree(id!),
+    enabled: id !== undefined && id !== null && id !== '',
+  })
+}
+
+export function useUpdateWorkspaceApplicationRolePermissionsMutation(id: EntityId) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (permissionIds: EntityId[]) =>
+      updateWorkspaceApplicationRolePermissions(id, permissionIds),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolesQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceApplicationRolesQueryKey, id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceApplicationRolesQueryKey, id, 'permissions-tree'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['workspace-application-role-permissions'],
+        }),
+      ])
+    },
   })
 }
 

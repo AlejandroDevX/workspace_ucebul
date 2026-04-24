@@ -2,12 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createWorkspaceUserApplication,
   deleteWorkspaceUserApplication,
+  getUserEffectivePermissionsTree,
   getWorkspaceUserApplicationById,
   listWorkspaceUserApplications,
+  updateUserPermissionOverrides,
   updateWorkspaceUserApplication,
 } from '@/modules/workspace-user-applications/api/workspace-user-applications.service'
 import type {
   CreateWorkspaceUserApplicationDto,
+  UpdateUserPermissionOverridesPayload,
   UpdateWorkspaceUserApplicationDto,
 } from '@/modules/workspace-user-applications/types/workspace-user-application.types'
 import type { EntityId } from '@/types/common'
@@ -26,6 +29,37 @@ export function useWorkspaceUserApplicationQuery(id?: EntityId) {
     queryKey: [...workspaceUserApplicationsQueryKey, id],
     queryFn: () => getWorkspaceUserApplicationById(id!),
     enabled: id !== undefined && id !== null && id !== '',
+  })
+}
+
+export function useUserEffectivePermissionsTreeQuery(id?: EntityId) {
+  return useQuery({
+    queryKey: [...workspaceUserApplicationsQueryKey, id, 'effective-permissions-tree'],
+    queryFn: () => getUserEffectivePermissionsTree(id!),
+    enabled: id !== undefined && id !== null && id !== '',
+  })
+}
+
+export function useUpdateUserPermissionOverridesMutation(id: EntityId) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: UpdateUserPermissionOverridesPayload) =>
+      updateUserPermissionOverrides(id, payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: workspaceUserApplicationsQueryKey }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceUserApplicationsQueryKey, id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceUserApplicationsQueryKey, id, 'effective-permissions-tree'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['workspace-user-application-permissions'],
+        }),
+      ])
+    },
   })
 }
 

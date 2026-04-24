@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Plus, Save, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Folder, Plus, Save, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -26,11 +26,13 @@ import {
   useDeleteWorkspaceUserApplicationPermissionMutation,
   useUpdateWorkspaceApplicationPermissionMutation,
   useWorkspaceApplicationPermissionQuery,
-  useWorkspaceApplicationPermissionsQuery,
+  useWorkspaceApplicationPermissionsTreeQuery,
   useWorkspaceUserApplicationPermissionQuery,
   useWorkspaceUserApplicationPermissionsQuery,
 } from '@/modules/workspace-permissions/hooks/useWorkspacePermissionsQuery'
 import type {
+  ApplicationModuleWithPermissions,
+  ApplicationPermissionsTree,
   CreateWorkspaceApplicationPermissionDto,
   UpdateWorkspaceApplicationPermissionDto,
   WorkspaceApplicationPermission,
@@ -39,7 +41,6 @@ import type {
 import { getWorkspaceUserApplicationSummary } from '@/modules/workspace-user-applications/utils/access-display'
 import { APP_ROUTES, detailRoutes } from '@/routes/paths'
 import { getErrorMessage } from '@/utils/error-message'
-import { groupFlatPermissionsByModule } from '@/utils/permissions'
 
 const applicationPermissionSchema = z.object({
   workspace_application_permission_workspace_application_id: z
@@ -124,18 +125,47 @@ function sanitizePermissionPayload<TPayload extends CreateWorkspaceApplicationPe
   }
 }
 
-interface GroupedPermissionsListProps {
-  permissions: WorkspaceApplicationPermission[]
+interface ApplicationPermissionsTreeViewProps {
+  applications: ApplicationPermissionsTree[]
   onDelete: (permission: WorkspaceApplicationPermission) => void
 }
 
-function GroupedPermissionsList({
-  permissions,
-  onDelete,
-}: GroupedPermissionsListProps) {
-  const groupedPermissions = groupFlatPermissionsByModule(permissions)
+function getApplicationPermissionsCount(application: ApplicationPermissionsTree) {
+  return (
+    application.modules.reduce(
+      (total, module) => total + module.permissions.length,
+      0,
+    ) + (application.without_module?.length ?? 0)
+  )
+}
 
-  if (permissions.length === 0) {
+function ApplicationPermissionsTreeView({
+  applications,
+  onDelete,
+}: ApplicationPermissionsTreeViewProps) {
+  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
+    () => new Set(),
+  )
+  const visibleApplications = applications.filter(
+    (application) =>
+      application.modules.length > 0 || (application.without_module?.length ?? 0) > 0,
+  )
+
+  function toggleModule(moduleKey: string) {
+    setCollapsedModules((current) => {
+      const next = new Set(current)
+
+      if (next.has(moduleKey)) {
+        next.delete(moduleKey)
+      } else {
+        next.add(moduleKey)
+      }
+
+      return next
+    })
+  }
+
+  if (visibleApplications.length === 0) {
     return (
       <p className="text-muted">
         Todavía no hay permisos registrados para mostrar.
@@ -144,59 +174,55 @@ function GroupedPermissionsList({
   }
 
   return (
-    <div className="module-grid">
-      {Object.entries(groupedPermissions).map(([groupKey, group]) => (
-        <section className="module-card" key={groupKey}>
-          <div className="module-card__header">
+    <div className="permissions-tree">
+      {visibleApplications.map((application) => (
+        <section
+          className="permissions-tree__application"
+          key={application.workspace_application_id}
+        >
+          <div className="permissions-tree__application-header">
             <div>
-              <h3>{group.module_name}</h3>
-              <p className="module-card__meta">
-                {group.module_slug ?? 'Sin módulo'}
+              <h3>{application.workspace_application_name}</h3>
+              <p className="permissions-tree__meta">
+                {application.workspace_application_slug}
               </p>
             </div>
-            <span className="module-card__meta">
-              {group.permissions.length} permisos
+            <span className="permissions-tree__meta">
+              {application.modules.length} módulos · {getApplicationPermissionsCount(application)} permisos
             </span>
           </div>
-          <div className="module-card__permissions">
-            {group.permissions.map((permission) => (
-              <div
-                className="permission-detail-card"
-                key={permission.workspace_application_permission_id}
-              >
-                <div>
-                  <p className="permission-detail-card__label">
-                    {permission.workspace_application?.workspace_application_name ??
-                      'Aplicación'}
-                  </p>
-                  <strong>{permission.workspace_application_permission_name}</strong>
-                </div>
-                <div className="permission-badge-list">
-                  <PermissionBadge
-                    label={permission.workspace_application_permission_slug}
-                  />
-                </div>
-                <div className="resource-table__actions">
-                  <Link
-                    className="button button--ghost"
-                    to={detailRoutes.applicationPermission(
-                      permission.workspace_application_permission_id,
-                    )}
-                  >
-                    Abrir
-                  </Link>
-                  <AccessGuard allowedRoles={['super_admin']}>
-                    <Button
-                      variant="danger"
-                      leftIcon={<Trash2 size={16} />}
-                      onClick={() => onDelete(permission)}
-                    >
-                      Eliminar
-                    </Button>
-                  </AccessGuard>
-                </div>
-              </div>
-            ))}
+
+          <div className="permissions-tree__modules">
+            {application.modules.map((module) => {
+              const moduleKey = `${application.workspace_application_id}:${module.workspace_application_module_id}`
+
+              return (
+                <PermissionModuleTree
+                  isCollapsed={collapsedModules.has(moduleKey)}
+                  key={moduleKey}
+                  moduleKey={moduleKey}
+                  module={module}
+                  onDelete={onDelete}
+                  onToggle={toggleModule}
+                />
+              )
+            })}
+            {application.without_module?.length ? (
+              <PermissionModuleTree
+                isCollapsed={collapsedModules.has(
+                  `${application.workspace_application_id}:without_module`,
+                )}
+                moduleKey={`${application.workspace_application_id}:without_module`}
+                module={{
+                  workspace_application_module_id: 'without_module',
+                  workspace_application_module_name: 'Sin módulo',
+                  workspace_application_module_slug: 'without_module',
+                  permissions: application.without_module,
+                }}
+                onDelete={onDelete}
+                onToggle={toggleModule}
+              />
+            ) : null}
           </div>
         </section>
       ))}
@@ -204,8 +230,86 @@ function GroupedPermissionsList({
   )
 }
 
+interface PermissionModuleTreeProps {
+  moduleKey: string
+  module: ApplicationModuleWithPermissions
+  isCollapsed: boolean
+  onToggle: (moduleKey: string) => void
+  onDelete: (permission: WorkspaceApplicationPermission) => void
+}
+
+function PermissionModuleTree({
+  moduleKey,
+  module,
+  isCollapsed,
+  onToggle,
+  onDelete,
+}: PermissionModuleTreeProps) {
+  return (
+    <div className="permissions-tree__module">
+      <button
+        className="permissions-tree__module-button"
+        type="button"
+        onClick={() => onToggle(moduleKey)}
+      >
+        {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+        <Folder size={16} />
+        <span>{module.workspace_application_module_name}</span>
+        <span className="permissions-tree__meta">
+          {module.workspace_application_module_slug}
+        </span>
+        <span className="permissions-tree__count">
+          {module.permissions.length} permisos
+        </span>
+      </button>
+
+      {!isCollapsed ? (
+        <div className="permissions-tree__permissions">
+          {module.permissions.length ? (
+            module.permissions.map((permission) => (
+              <div
+                className="permissions-tree__permission"
+                key={permission.workspace_application_permission_id}
+              >
+                <div className="permissions-tree__permission-line" />
+                <div className="permissions-tree__permission-content">
+                  <div>
+                    <strong>{permission.workspace_application_permission_name}</strong>
+                    <p>{permission.workspace_application_permission_slug}</p>
+                  </div>
+                  <div className="resource-table__actions">
+                    <Link
+                      className="button button--ghost"
+                      to={detailRoutes.applicationPermission(
+                        permission.workspace_application_permission_id,
+                      )}
+                    >
+                      Abrir
+                    </Link>
+                    <AccessGuard allowedRoles={['super_admin']}>
+                      <Button
+                        variant="danger"
+                        leftIcon={<Trash2 size={16} />}
+                        onClick={() => onDelete(permission)}
+                      >
+                        Eliminar
+                      </Button>
+                    </AccessGuard>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="permissions-tree__empty">Sin permisos en este módulo.</p>
+          )}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 export function WorkspaceApplicationPermissionsPage() {
-  const query = useWorkspaceApplicationPermissionsQuery()
+  const permissionsTreeQuery = useWorkspaceApplicationPermissionsTreeQuery()
   const applicationsQuery = useWorkspaceApplicationsQuery()
   const modulesQuery = useWorkspaceApplicationModulesQuery()
   const createMutation = useCreateWorkspaceApplicationPermissionMutation()
@@ -277,12 +381,16 @@ export function WorkspaceApplicationPermissionsPage() {
     setItemToDelete(null)
   }
 
-  if (query.isLoading || applicationsQuery.isLoading || modulesQuery.isLoading) {
+  if (
+    permissionsTreeQuery.isLoading ||
+    applicationsQuery.isLoading ||
+    modulesQuery.isLoading
+  ) {
     return <LoadingState fullScreen message="Cargando permisos por aplicación..." />
   }
 
-  if (query.error) {
-    return <ErrorState description={getErrorMessage(query.error)} />
+  if (permissionsTreeQuery.error) {
+    return <ErrorState description={getErrorMessage(permissionsTreeQuery.error)} />
   }
 
   if (applicationsQuery.error) {
@@ -305,8 +413,8 @@ export function WorkspaceApplicationPermissionsPage() {
       }
     >
       <SectionCard title="Listado" description="Permisos globales disponibles por aplicación.">
-        <GroupedPermissionsList
-          permissions={query.data ?? []}
+        <ApplicationPermissionsTreeView
+          applications={permissionsTreeQuery.data ?? []}
           onDelete={setItemToDelete}
         />
       </SectionCard>

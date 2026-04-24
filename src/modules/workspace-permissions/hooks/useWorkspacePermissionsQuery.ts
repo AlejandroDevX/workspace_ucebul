@@ -8,6 +8,7 @@ import {
   deleteWorkspaceUserApplicationPermission,
   getWorkspaceApplicationPermissionById,
   getWorkspaceApplicationRolePermissionById,
+  getApplicationPermissionsTree,
   getWorkspaceUserApplicationPermissionById,
   workspaceApplicationPermissionsService,
   workspaceApplicationRolePermissionsService,
@@ -47,6 +48,13 @@ export function useWorkspaceApplicationPermissionsQuery() {
   })
 }
 
+export function useWorkspaceApplicationPermissionsTreeQuery() {
+  return useQuery({
+    queryKey: [...workspaceApplicationPermissionsQueryKey, 'tree'],
+    queryFn: getApplicationPermissionsTree,
+  })
+}
+
 export function useWorkspaceApplicationPermissionQuery(id?: EntityId) {
   return useQuery({
     queryKey: [...workspaceApplicationPermissionsQueryKey, id],
@@ -62,9 +70,14 @@ export function useCreateWorkspaceApplicationPermissionMutation() {
     mutationFn: (payload: CreateWorkspaceApplicationPermissionDto) =>
       createWorkspaceApplicationPermission(payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: workspaceApplicationPermissionsQueryKey,
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationPermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceApplicationPermissionsQueryKey, 'tree'],
+        }),
+      ])
     },
   })
 }
@@ -79,6 +92,9 @@ export function useUpdateWorkspaceApplicationPermissionMutation(id: EntityId) {
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: workspaceApplicationPermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceApplicationPermissionsQueryKey, 'tree'],
         }),
         queryClient.invalidateQueries({
           queryKey: [...workspaceApplicationPermissionsQueryKey, id],
@@ -97,6 +113,9 @@ export function useDeleteWorkspaceApplicationPermissionMutation() {
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: workspaceApplicationPermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceApplicationPermissionsQueryKey, 'tree'],
         }),
         queryClient.removeQueries({
           queryKey: [...workspaceApplicationPermissionsQueryKey, id],

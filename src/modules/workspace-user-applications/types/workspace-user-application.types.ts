@@ -30,3 +30,35 @@ export interface CreateWorkspaceUserApplicationDto {
 }
 
 export type UpdateWorkspaceUserApplicationDto = CreateWorkspaceUserApplicationDto
+
+export type EffectivePermission = WorkspaceApplicationPermission & {
+  is_from_role: boolean
+  is_direct_allow: boolean
+  is_direct_deny: boolean
+  is_effectively_allowed: boolean
+}
+
+export interface EffectivePermissionModule {
+  workspace_application_module_id: EntityId
+  workspace_application_module_name: string
+  workspace_application_module_slug: string
+  workspace_application_module_order?: number
+  permissions: EffectivePermission[]
+}
+
+export interface EffectivePermissionsTree {
+  access: WorkspaceUserApplication
+  summary: {
+    role_permission_count: number
+    direct_allow_count: number
+    direct_deny_count: number
+    effective_permission_count: number
+  }
+  modules: EffectivePermissionModule[]
+  without_module: EffectivePermission[]
+}
+
+export interface UpdateUserPermissionOverridesPayload {
+  allowed_permission_ids: EntityId[]
+  denied_permission_ids: EntityId[]
+}
