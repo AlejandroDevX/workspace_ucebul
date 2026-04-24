@@ -1,5 +1,5 @@
-import { PermissionsChecklist as FoundationPermissionsChecklist } from 'foundation-ui'
 import type { WorkspaceApplicationPermission } from '@/modules/workspace-permissions/types/workspace-permission.types'
+import { groupFlatPermissionsByModule } from '@/utils/permissions'
 
 interface PermissionsChecklistProps {
   permissions: WorkspaceApplicationPermission[]
@@ -14,32 +14,42 @@ export function PermissionsChecklist({
   onToggle,
   disabled = false,
 }: PermissionsChecklistProps) {
+  const groupedPermissions = groupFlatPermissionsByModule(permissions)
+  const selectedIds = new Set(selectedPermissionIds)
+
   return (
-    <FoundationPermissionsChecklist
-      items={permissions.map((permission) => ({
-        id: String(permission.workspace_application_permission_id),
-        label: permission.workspace_application_permission_name,
-        description: [
-          permission.workspace_application_permission_slug,
-          permission.workspace_application_permission_description,
-        ]
-          .filter(Boolean)
-          .join(' • '),
-        disabled,
-      }))}
-      value={selectedPermissionIds}
-      onValueChange={(value) => {
-        const current = new Set(selectedPermissionIds)
-        const next = new Set(value)
+    <div className="permissions-checklist permissions-checklist--grouped">
+      {Object.entries(groupedPermissions).map(([groupKey, group]) => (
+        <section className="permission-group" key={groupKey}>
+          <div className="permission-group__header">
+            <h3>{group.module_name}</h3>
+            {group.module_slug ? <span>{group.module_slug}</span> : null}
+          </div>
+          <div className="permission-group__items">
+            {group.permissions.map((permission) => {
+              const permissionId = String(permission.workspace_application_permission_id)
 
-        const changedId =
-          value.find((item) => !current.has(item)) ??
-          selectedPermissionIds.find((item) => !next.has(item))
-
-        if (changedId) {
-          onToggle(changedId)
-        }
-      }}
-    />
+              return (
+                <label className="permissions-checklist__item" key={permissionId}>
+                  <input
+                    checked={selectedIds.has(permissionId)}
+                    disabled={disabled}
+                    type="checkbox"
+                    onChange={() => onToggle(permissionId)}
+                  />
+                  <div className="permissions-checklist__content">
+                    <strong>{permission.workspace_application_permission_name}</strong>
+                    <p>{permission.workspace_application_permission_slug}</p>
+                    {permission.workspace_application_permission_description ? (
+                      <p>{permission.workspace_application_permission_description}</p>
+                    ) : null}
+                  </div>
+                </label>
+              )
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
   )
 }

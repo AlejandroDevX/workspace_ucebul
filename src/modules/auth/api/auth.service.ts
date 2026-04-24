@@ -2,6 +2,8 @@ import { httpClient } from '@/services/http-client'
 import { ApiError } from '@/services/api-error'
 import type {
   ForgotPasswordDto,
+  AuthMeParams,
+  AuthSession,
   LoginDto,
   LoginResult,
   ResetPasswordDto,
@@ -15,14 +17,18 @@ import type {
   WorkspaceVerifyOtpResponseData,
 } from '@/modules/auth/types/auth.types'
 import type {
+  AuthApplicationRoleAccess,
   AuthApplicationAccess,
+  AuthPermissionAccess,
   AuthUser,
   WorkspaceRole,
 } from '@/types/auth'
 import type { ApiSuccessResponse } from '@/types/api'
 import type { EntityId } from '@/types/common'
+import type { GroupedPermissions } from '@/types/permissions'
 import { isRecord } from '@/utils/is-record'
 import { unwrapData } from '@/utils/api-response'
+import { sanitizeQueryParams } from '@/utils/query-params'
 
 function readString(value: unknown, fallback = '') {
   return typeof value === 'string' ? value : fallback
@@ -40,6 +46,18 @@ function normalizeRoles(value: unknown): WorkspaceRole[] {
       }
 
       if (isRecord(role)) {
+        if (isRecord(role.workspace_role) && typeof role.workspace_role.workspace_role_slug === 'string') {
+          return role.workspace_role.workspace_role_slug
+        }
+
+        if (typeof role.slug === 'string') {
+          return role.slug
+        }
+
+        if (typeof role.workspace_role_slug === 'string') {
+          return role.workspace_role_slug
+        }
+
         if (typeof role.name === 'string') {
           return role.name
         }
@@ -59,7 +77,102 @@ function normalizeRoles(value: unknown): WorkspaceRole[] {
 
       return null
     })
-    .filter((role): role is WorkspaceRole => role === 'user' || role === 'admin' || role === 'super_admin')
+    .filter((role): role is WorkspaceRole => typeof role === 'string' && role.length > 0)
+}
+
+function normalizePermission(value: unknown): AuthPermissionAccess | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  const source = isRecord(value.workspace_application_permission)
+    ? value.workspace_application_permission
+    : value
+
+  const id =
+    (source.workspace_application_permission_id as EntityId | undefined) ??
+    (source.id as EntityId | undefined)
+  const name =
+    readString(source.workspace_application_permission_name) ||
+    readString(source.name) ||
+    undefined
+  const slug =
+    readString(source.workspace_application_permission_slug) ||
+    readString(source.slug) ||
+    undefined
+  const description =
+    readString(source.workspace_application_permission_description) ||
+    readString(source.description) ||
+    undefined
+
+  if (!id && !name && !slug) {
+    return null
+  }
+
+  return {
+    id,
+    name,
+    slug,
+    description,
+  }
+}
+
+function normalizePermissions(value: unknown): AuthPermissionAccess[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return value
+    .map((permission) => normalizePermission(permission))
+    .filter((permission): permission is AuthPermissionAccess => permission !== null)
+}
+
+function normalizeApplicationRole(value: unknown): AuthApplicationRoleAccess | null {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  const source = isRecord(value.workspace_application_role)
+    ? value.workspace_application_role
+    : value
+
+  const id =
+    (source.workspace_application_role_id as EntityId | undefined) ??
+    (source.id as EntityId | undefined)
+  const name =
+    readString(source.workspace_application_role_name) ||
+    readString(source.name) ||
+    undefined
+  const slug =
+    readString(source.workspace_application_role_slug) ||
+    readString(source.slug) ||
+    undefined
+  const description =
+    readString(source.workspace_application_role_description) ||
+    readString(source.description) ||
+    undefined
+  const isActive =
+    typeof source.workspace_application_role_is_active === 'boolean'
+      ? source.workspace_application_role_is_active
+      : typeof source.is_active === 'boolean'
+        ? source.is_active
+        : undefined
+  const permissions = normalizePermissions(
+    source.application_permissions ?? source.workspace_application_permissions,
+  )
+
+  if (!id && !name && !slug) {
+    return null
+  }
+
+  return {
+    id,
+    name,
+    slug,
+    description,
+    isActive,
+    permissions,
+  }
 }
 
 function normalizeApplications(value: unknown): AuthApplicationAccess[] {
@@ -73,9 +186,14 @@ function normalizeApplications(value: unknown): AuthApplicationAccess[] {
         return null
       }
 
-      const id = application.id as EntityId | undefined
+      const accessId =
+        (application.workspace_user_application_id as EntityId | undefined) ??
+        (application.id as EntityId | undefined)
       const nestedApplication = isRecord(application.workspace_application)
         ? application.workspace_application
+        : undefined
+      const nestedRole = isRecord(application.workspace_application_role)
+        ? application.workspace_application_role
         : undefined
       const name =
         readString(application.name) ||
@@ -104,15 +222,35 @@ function normalizeApplications(value: unknown): AuthApplicationAccess[] {
           : typeof application.is_active === 'boolean'
             ? application.is_active
             : undefined
+      const accessIsActive =
+        typeof application.workspace_user_application_is_active === 'boolean'
+          ? application.workspace_user_application_is_active
+          : undefined
+      const directPermissions = normalizePermissions(application.user_application_permissions)
+      const effectivePermissions = normalizePermissions(
+        application.workspace_user_application_effective_permissions,
+      )
+      const applicationRole = normalizeApplicationRole(nestedRole)
+      const permissionsByModule = isRecord(application.permissions_by_module)
+        ? (application.permissions_by_module as GroupedPermissions)
+        : undefined
 
       return {
-        id,
+        accessId,
+        id:
+          (nestedApplication?.workspace_application_id as EntityId | undefined) ??
+          (application.id as EntityId | undefined),
         name: name || undefined,
         slug,
         description,
         logoUrl,
         url,
         isActive,
+        accessIsActive,
+        applicationRole,
+        directPermissions,
+        effectivePermissions,
+        permissionsByModule,
       }
     })
     .filter((application): application is AuthApplicationAccess => application !== null)
@@ -121,11 +259,58 @@ function normalizeApplications(value: unknown): AuthApplicationAccess[] {
 function normalizeWorkspaceUser(source: WorkspaceAuthUserResponse): AuthUser {
   return {
     id: source.workspace_user_id,
+    workspace_user_id: source.workspace_user_id,
     name: source.workspace_user_name,
+    workspace_user_name: source.workspace_user_name,
     lastName: source.workspace_user_last_name,
+    workspace_user_last_name: source.workspace_user_last_name,
     email: source.workspace_user_email,
+    workspace_user_email: source.workspace_user_email,
     roles: normalizeRoles(source.user_roles),
     applications: normalizeApplications(source.user_applications),
+  }
+}
+
+function normalizeGroupedPermissions(value: unknown): GroupedPermissions {
+  return isRecord(value) ? (value as GroupedPermissions) : {}
+}
+
+function normalizeAuthSession(payload: unknown): AuthSession | undefined {
+  const candidate = unwrapData<unknown>(payload)
+
+  if (!isRecord(candidate)) {
+    return undefined
+  }
+
+  const user = normalizeAuthUser(candidate)
+
+  if (!user) {
+    return undefined
+  }
+
+  return {
+    user,
+    workspaceRoles: Array.isArray(candidate.user_roles)
+      ? (candidate.user_roles as NonNullable<WorkspaceAuthUserResponse['user_roles']>)
+      : [],
+    userApplications: Array.isArray(candidate.user_applications)
+      ? (candidate.user_applications as NonNullable<
+          WorkspaceAuthUserResponse['user_applications']
+        >)
+      : [],
+    currentApplication: isRecord(candidate.current_application)
+      ? (candidate.current_application as unknown as AuthSession['currentApplication'])
+      : null,
+    currentApplicationAccess: isRecord(candidate.current_application_access)
+      ? (candidate.current_application_access as unknown as AuthSession['currentApplicationAccess'])
+      : null,
+    currentApplicationPermissions: normalizeGroupedPermissions(
+      candidate.current_application_permissions,
+    ),
+    workspaceModules: normalizeGroupedPermissions(candidate.workspace_modules),
+    otps: Array.isArray(candidate.otps)
+      ? (candidate.otps as AuthSession['otps'])
+      : [],
   }
 }
 
@@ -173,9 +358,15 @@ function normalizeAuthUser(payload: unknown): AuthUser | undefined {
 
   return {
     id,
+    workspace_user_id: id,
     name: readString(source.name) || readString(source.workspace_user_name, email),
+    workspace_user_name:
+      readString(source.name) || readString(source.workspace_user_name, email),
     lastName: readString(source.last_name) || readString(source.workspace_user_last_name) || undefined,
+    workspace_user_last_name:
+      readString(source.last_name) || readString(source.workspace_user_last_name) || undefined,
     email,
+    workspace_user_email: email,
     roles: normalizeRoles(roleSource),
     applications: normalizeApplications(
       source.applications ?? source.user_applications,
@@ -278,17 +469,26 @@ export async function logoutWorkspaceUser() {
   await httpClient.post<ApiSuccessResponse<null>>('/auth/logout')
 }
 
-export async function getAuthenticatedWorkspaceUser() {
+export async function getAuthenticatedWorkspaceSession(params: AuthMeParams = {}) {
   const response = await httpClient.get<ApiSuccessResponse<WorkspaceAuthUserResponse>>(
     '/auth/me',
+    {
+      params: sanitizeQueryParams(params),
+    },
   )
-  const user = normalizeAuthUser(response.data)
+  const session = normalizeAuthSession(response.data)
 
-  if (!user) {
+  if (!session) {
     throw new ApiError('No fue posible resolver el usuario autenticado')
   }
 
-  return user
+  return session
+}
+
+export async function getAuthenticatedWorkspaceUser(params: AuthMeParams = {}) {
+  const session = await getAuthenticatedWorkspaceSession(params)
+
+  return session.user
 }
 
 export async function validateWorkspaceToken() {
@@ -332,6 +532,7 @@ export const authService = {
   login: loginWorkspaceUser,
   logout: logoutWorkspaceUser,
   getMe: getAuthenticatedWorkspaceUser,
+  getSession: getAuthenticatedWorkspaceSession,
   validateToken: validateWorkspaceToken,
   forgotPassword: forgotWorkspacePassword,
   verifyOtp: verifyWorkspaceOtp,

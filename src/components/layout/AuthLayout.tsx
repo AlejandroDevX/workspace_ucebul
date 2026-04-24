@@ -1,30 +1,37 @@
 import { KeyRound, Shield, Workflow } from 'lucide-react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { APP_ROUTES } from '@/routes/paths'
+import { cn } from '@/utils/classnames'
 
 const highlights = [
   {
     icon: Shield,
-    title: 'Autenticación global',
-    description: 'La sesión del workspace queda preparada para validar token, recuperar sesión e invalidar accesos.',
+    title: 'Accesos centralizados',
+    description: 'Administra el ingreso al ecosistema desde un solo lugar, con control claro sobre usuarios y sesiones.',
   },
   {
     icon: Workflow,
-    title: 'Módulos desacoplados',
-    description: 'La UI temporal no depende de Axios ni de detalles del backend Laravel.',
+    title: 'Gestión diaria más simple',
+    description: 'Consulta, organiza y actualiza la información clave del workspace sin fricción en la operación.',
   },
   {
     icon: KeyRound,
-    title: 'Recuperación por OTP',
-    description: 'El flujo de correo, verificación y reseteo queda listo para conectarse contra la API existente.',
+    title: 'Recuperación segura',
+    description: 'Facilita la recuperación de acceso para tu equipo con un proceso guiado y confiable.',
   },
 ] as const
 
 export function AuthLayout() {
+  const location = useLocation()
+  const isLoginPage = location.pathname === APP_ROUTES.login
+
   return (
-    <main className="auth-shell">
+    <main className={cn('auth-shell', isLoginPage && 'auth-shell--login')}>
       <section className="auth-shell__hero">
         <div className="auth-shell__brand">
-          <span className="auth-shell__brand-mark">UW</span>
+          <span className="auth-shell__brand-mark">
+            <img className="auth-shell__brand-logo" src="/ucebul.png" alt="Ucebul" />
+          </span>
           <div>
             <p className="auth-shell__eyebrow">Ucebul Ecosystem</p>
             <h1>Workspace Platform</h1>
@@ -33,7 +40,7 @@ export function AuthLayout() {
 
         <div className="auth-shell__copy">
           <p className="auth-shell__lead">
-            Base administrativa moderna para operar usuarios, roles, aplicaciones y permisos del ecosistema.
+            Gestiona usuarios, permisos y accesos del ecosistema Ucebul desde una sola plataforma.
           </p>
         </div>
 

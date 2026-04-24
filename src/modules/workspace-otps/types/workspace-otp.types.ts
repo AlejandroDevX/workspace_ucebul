@@ -12,7 +12,7 @@ export interface WorkspaceOtp {
   workspace_otp_updated_at?: string
 }
 
-export interface WorkspaceOtpFilters {}
+export type WorkspaceOtpFilters = Record<string, never>
 
 export interface CreateWorkspaceOtpDto {
   workspace_otp_workspace_user_id?: EntityId | null
@@ -23,4 +23,4 @@ export interface CreateWorkspaceOtpDto {
   workspace_otp_used_at?: string | null
 }
 
-export interface UpdateWorkspaceOtpDto extends CreateWorkspaceOtpDto {}
+export type UpdateWorkspaceOtpDto = CreateWorkspaceOtpDto

@@ -8,9 +8,12 @@ export const ROUTE_SEGMENTS = {
   users: 'users',
   roles: 'roles',
   applications: 'applications',
+  applicationModules: 'application-modules',
+  applicationRoles: 'application-roles',
   userRoles: 'user-roles',
   userApplications: 'user-applications',
   applicationPermissions: 'application-permissions',
+  applicationRolePermissions: 'application-role-permissions',
   userApplicationPermissions: 'user-application-permissions',
   otps: 'otps',
   unauthorized: 'unauthorized',
@@ -28,9 +31,12 @@ export const APP_ROUTES = {
   users: `/${ROUTE_SEGMENTS.users}`,
   roles: `/${ROUTE_SEGMENTS.roles}`,
   applications: `/${ROUTE_SEGMENTS.applications}`,
+  applicationModules: `/${ROUTE_SEGMENTS.applicationModules}`,
+  applicationRoles: `/${ROUTE_SEGMENTS.applicationRoles}`,
   userRoles: `/${ROUTE_SEGMENTS.userRoles}`,
   userApplications: `/${ROUTE_SEGMENTS.userApplications}`,
   applicationPermissions: `/${ROUTE_SEGMENTS.applicationPermissions}`,
+  applicationRolePermissions: `/${ROUTE_SEGMENTS.applicationRolePermissions}`,
   userApplicationPermissions: `/${ROUTE_SEGMENTS.userApplicationPermissions}`,
   otps: `/${ROUTE_SEGMENTS.otps}`,
 } as const
@@ -40,12 +46,20 @@ export const detailRoutes = {
   role: (workspaceRoleId: string | number) => `${APP_ROUTES.roles}/${workspaceRoleId}`,
   application: (workspaceApplicationId: string | number) =>
     `${APP_ROUTES.applications}/${workspaceApplicationId}`,
+  applicationModule: (workspaceApplicationModuleId: string | number) =>
+    `${APP_ROUTES.applicationModules}/${workspaceApplicationModuleId}`,
+  applicationRole: (workspaceApplicationRoleId: string | number) =>
+    `${APP_ROUTES.applicationRoles}/${workspaceApplicationRoleId}`,
   userRole: (workspaceUserRoleId: string | number) =>
     `${APP_ROUTES.userRoles}/${workspaceUserRoleId}`,
   userApplication: (workspaceUserApplicationId: string | number) =>
     `${APP_ROUTES.userApplications}/${workspaceUserApplicationId}`,
   applicationPermission: (workspaceApplicationPermissionId: string | number) =>
     `${APP_ROUTES.applicationPermissions}/${workspaceApplicationPermissionId}`,
+  applicationRolePermission: (
+    workspaceApplicationRolePermissionId: string | number,
+  ) =>
+    `${APP_ROUTES.applicationRolePermissions}/${workspaceApplicationRolePermissionId}`,
   userApplicationPermission: (
     workspaceUserApplicationPermissionId: string | number,
   ) =>

@@ -30,10 +30,8 @@ export function ResetPasswordPage() {
   })
 
   async function onSubmit(values: ResetPasswordFormValues) {
-    const {
-      workspace_user_password_confirmation: _workspaceUserPasswordConfirmation,
-      ...payload
-    } = values
+    const { workspace_user_password_confirmation, ...payload } = values
+    void workspace_user_password_confirmation
 
     await resetPasswordMutation.mutateAsync(payload)
     navigate(APP_ROUTES.login, { replace: true })

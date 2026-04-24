@@ -1,26 +1,43 @@
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(18px);
+  margin-bottom: var(--space-6);
+  padding: 0 0 var(--space-4);
+  border-bottom: 1px solid rgba(22, 32, 51, 0.1);
 }
 
-.topbar__eyebrow {
-  color: var(--color-text-soft);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.75rem;
+.topbar__main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.topbar__heading {
+  min-width: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.topbar__breadcrumb {
+  min-width: 0;
+}
+
+.topbar__breadcrumb .fui-breadcrumb__link {
+  color: #8eb80b;
+}
+
+.topbar__breadcrumb .fui-breadcrumb__link:hover {
+  color: #6d9007;
+}
+
+.topbar__breadcrumb .fui-breadcrumb__current {
+  color: var(--color-text);
+  font-weight: 700;
 }
 
 .topbar__title {
-  margin-top: var(--space-2);
-  font-size: 1.4rem;
+  font-size: clamp(2.15rem, 3vw, 3rem);
+  font-weight: 800;
+  line-height: 1;
 }
 
 .topbar__actions,
@@ -30,20 +47,48 @@
   gap: var(--space-3);
 }
 
-.topbar__identity {
-  padding: 0.55rem 0.75rem;
-  border-radius: var(--radius-md);
-  background: var(--color-surface-muted);
+.topbar__actions {
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-4);
 }
 
-.topbar__identity-icon {
-  width: 2rem;
-  height: 2rem;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(20, 93, 160, 0.12);
-  color: var(--color-primary);
+.topbar__identity {
+  padding: 0;
+  background: transparent;
+}
+
+.topbar__account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.45rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.topbar__account-trigger:hover {
+  background: rgba(20, 93, 160, 0.05);
+  border-color: var(--color-border);
+}
+
+.topbar__account-trigger:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.topbar__avatar {
+  flex-shrink: 0;
+}
+
+.topbar__account-caret {
+  color: var(--color-text-soft);
+  flex-shrink: 0;
 }
 
 .topbar__identity strong,
@@ -51,13 +96,18 @@
   display: block;
 }
 
+.topbar__identity-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
 .topbar__identity span {
   color: var(--color-text-soft);
-  font-size: 0.83rem;
+  font-size: 0.88rem;
 }
 
 @media (max-width: 720px) {
-  .topbar,
+  .topbar__main,
   .topbar__actions {
     align-items: stretch;
     flex-direction: column;
@@ -65,5 +115,9 @@
 
   .topbar__identity {
     width: 100%;
+  }
+
+  .topbar__account-trigger {
+    align-self: flex-start;
   }
 }

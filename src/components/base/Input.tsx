@@ -4,7 +4,7 @@ import {
 } from 'foundation-ui'
 import { forwardRef } from 'react'
 
-interface InputProps extends FoundationInputProps {}
+type InputProps = FoundationInputProps
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   props,

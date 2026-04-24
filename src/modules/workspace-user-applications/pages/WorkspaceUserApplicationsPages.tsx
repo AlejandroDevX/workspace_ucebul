@@ -13,6 +13,7 @@ import { CrudPageLayout } from '@/components/layout/CrudPageLayout'
 import { AccessGuard } from '@/components/layout/AccessGuard'
 import { SectionCard } from '@/components/layout/SectionCard'
 import { useWorkspaceApplicationsQuery } from '@/modules/workspace-applications/hooks/useWorkspaceApplicationsQuery'
+import { useWorkspaceApplicationRolesQuery } from '@/modules/workspace-application-roles/hooks/useWorkspaceApplicationRolesQuery'
 import {
   useWorkspaceUserApplicationPermissionsByAccessQuery,
   useWorkspaceUserApplicationPermissionsQuery,
@@ -43,6 +44,14 @@ function buildPermissionCountMap(items: { workspace_user_application_permission_
   }, {})
 }
 
+function buildEffectivePermissionCountMap(items: WorkspaceUserApplication[]) {
+  return items.reduce<Record<string, number>>((accumulator, item) => {
+    accumulator[String(item.workspace_user_application_id)] =
+      item.workspace_user_application_effective_permissions?.length ?? 0
+    return accumulator
+  }, {})
+}
+
 function getApplicationFallbacks(items: WorkspaceUserApplication[]) {
   const map = new Map<string, NonNullable<WorkspaceUserApplication['workspace_application']>>()
 
@@ -61,6 +70,7 @@ export function WorkspaceUserApplicationsPage() {
   const itemsQuery = useWorkspaceUserApplicationsQuery()
   const usersQuery = useWorkspaceUsersQuery()
   const applicationsQuery = useWorkspaceApplicationsQuery()
+  const applicationRolesQuery = useWorkspaceApplicationRolesQuery()
   const assignedPermissionsQuery = useWorkspaceUserApplicationPermissionsQuery()
   const createMutation = useCreateWorkspaceUserApplicationMutation()
   const deleteMutation = useDeleteWorkspaceUserApplicationMutation()
@@ -73,9 +83,14 @@ export function WorkspaceUserApplicationsPage() {
     [itemsQuery.data],
   )
   const applications = applicationsQuery.data ?? fallbackApplications
+  const applicationRoles = applicationRolesQuery.data ?? []
   const permissionCountMap = useMemo(
     () => buildPermissionCountMap(assignedPermissionsQuery.data ?? []),
     [assignedPermissionsQuery.data],
+  )
+  const effectivePermissionCountMap = useMemo(
+    () => buildEffectivePermissionCountMap(itemsQuery.data ?? []),
+    [itemsQuery.data],
   )
 
   async function handleCreate(values: CreateWorkspaceUserApplicationDto) {
@@ -135,6 +150,12 @@ export function WorkspaceUserApplicationsPage() {
               cell: (row) => getWorkspaceUserApplicationSummary(row).applicationName,
             },
             {
+              key: 'application-role',
+              header: 'Rol interno',
+              cell: (row) =>
+                row.workspace_application_role?.workspace_application_role_name ?? 'Sin rol',
+            },
+            {
               key: 'status',
               header: 'Estado',
               cell: (row) => (
@@ -143,8 +164,14 @@ export function WorkspaceUserApplicationsPage() {
             },
             {
               key: 'permissions',
-              header: 'Permisos',
+              header: 'Permisos directos',
               cell: (row) => permissionCountMap[String(row.workspace_user_application_id)] ?? 0,
+            },
+            {
+              key: 'effective-permissions',
+              header: 'Permisos efectivos',
+              cell: (row) =>
+                effectivePermissionCountMap[String(row.workspace_user_application_id)] ?? 0,
             },
             {
               key: 'actions',
@@ -190,20 +217,26 @@ export function WorkspaceUserApplicationsPage() {
         title="Crear acceso"
         description="Selecciona el usuario y la aplicación desde buscadores y define si el acceso queda activo."
       >
-        {usersQuery.isLoading || applicationsQuery.isLoading ? (
+        {usersQuery.isLoading || applicationsQuery.isLoading || applicationRolesQuery.isLoading ? (
           <LoadingState message="Cargando catálogo para crear el acceso..." />
         ) : null}
         {usersQuery.error ? <ErrorState description={getErrorMessage(usersQuery.error)} /> : null}
         {applicationsQuery.error && applications.length === 0 ? (
           <ErrorState description={getErrorMessage(applicationsQuery.error)} />
         ) : null}
+        {applicationRolesQuery.error ? (
+          <ErrorState description={getErrorMessage(applicationRolesQuery.error)} />
+        ) : null}
         {!usersQuery.isLoading &&
         !applicationsQuery.isLoading &&
+        !applicationRolesQuery.isLoading &&
         !usersQuery.error &&
+        !applicationRolesQuery.error &&
         !(applicationsQuery.error && applications.length === 0) ? (
           <WorkspaceUserApplicationForm
             users={usersQuery.data ?? []}
             applications={applications}
+            applicationRoles={applicationRoles}
             submitLabel="Crear acceso"
             submitIcon={<Save size={16} />}
             onCancel={() => setIsCreateOpen(false)}
@@ -239,6 +272,7 @@ export function WorkspaceUserApplicationDetailPage() {
   const itemQuery = useWorkspaceUserApplicationQuery(workspaceUserApplicationId)
   const usersQuery = useWorkspaceUsersQuery()
   const applicationsQuery = useWorkspaceApplicationsQuery()
+  const applicationRolesQuery = useWorkspaceApplicationRolesQuery()
   const assignedPermissionsQuery =
     useWorkspaceUserApplicationPermissionsByAccessQuery(workspaceUserApplicationId)
   const updateMutation =
@@ -252,6 +286,7 @@ export function WorkspaceUserApplicationDetailPage() {
     [itemQuery.data],
   )
   const applications = applicationsQuery.data ?? fallbackApplications
+  const applicationRoles = applicationRolesQuery.data ?? []
 
   async function handleDelete() {
     await deleteMutation.mutateAsync(workspaceUserApplicationId)
@@ -282,26 +317,35 @@ export function WorkspaceUserApplicationDetailPage() {
         title="Editar acceso"
         description="Selecciona usuario, aplicación y estado sin exponer IDs técnicos."
       >
-        {usersQuery.isLoading || applicationsQuery.isLoading ? (
+        {usersQuery.isLoading || applicationsQuery.isLoading || applicationRolesQuery.isLoading ? (
           <LoadingState message="Cargando datos del formulario..." />
         ) : null}
         {usersQuery.error ? <ErrorState description={getErrorMessage(usersQuery.error)} /> : null}
         {applicationsQuery.error && applications.length === 0 ? (
           <ErrorState description={getErrorMessage(applicationsQuery.error)} />
         ) : null}
+        {applicationRolesQuery.error ? (
+          <ErrorState description={getErrorMessage(applicationRolesQuery.error)} />
+        ) : null}
         {!usersQuery.isLoading &&
         !applicationsQuery.isLoading &&
+        !applicationRolesQuery.isLoading &&
         !usersQuery.error &&
+        !applicationRolesQuery.error &&
         !(applicationsQuery.error && applications.length === 0) ? (
           <WorkspaceUserApplicationForm
             users={usersQuery.data ?? []}
             applications={applications}
+            applicationRoles={applicationRoles}
             defaultValues={{
               workspace_user_application_workspace_user_id: String(
                 itemQuery.data.workspace_user_application_workspace_user_id,
               ),
               workspace_user_application_workspace_application_id: String(
                 itemQuery.data.workspace_user_application_workspace_application_id,
+              ),
+              workspace_user_application_workspace_application_role_id: String(
+                itemQuery.data.workspace_user_application_workspace_application_role_id ?? '',
               ),
               workspace_user_application_is_active:
                 itemQuery.data.workspace_user_application_is_active,

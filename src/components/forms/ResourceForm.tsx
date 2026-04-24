@@ -41,7 +41,7 @@ export interface ResourceFormField<TValues extends FieldValues> {
 }
 
 interface ResourceFormProps<TValues extends FieldValues> {
-  form: UseFormReturn<TValues, any, any>
+  form: UseFormReturn<TValues>
   fields: ReadonlyArray<ResourceFormField<TValues>>
   onSubmit: (values: TValues) => void | Promise<void>
   actions: ReactNode

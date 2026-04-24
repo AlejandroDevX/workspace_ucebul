@@ -2,10 +2,13 @@ import { httpClient } from '@/services/http-client'
 import type { ApiSuccessResponse } from '@/types/api'
 import type {
   CreateWorkspaceApplicationPermissionDto,
+  CreateWorkspaceApplicationRolePermissionDto,
   CreateWorkspaceUserApplicationPermissionDto,
   UpdateWorkspaceApplicationPermissionDto,
+  UpdateWorkspaceApplicationRolePermissionDto,
   UpdateWorkspaceUserApplicationPermissionDto,
   WorkspaceApplicationPermission,
+  WorkspaceApplicationRolePermission,
   WorkspaceUserApplicationPermission,
 } from '@/modules/workspace-permissions/types/workspace-permission.types'
 import { unwrapData } from '@/utils/api-response'
@@ -56,6 +59,45 @@ export async function listWorkspaceUserApplicationPermissions() {
   return unwrapData<WorkspaceUserApplicationPermission[]>(response.data)
 }
 
+export async function listWorkspaceApplicationRolePermissions() {
+  const response = await httpClient.get<
+    ApiSuccessResponse<WorkspaceApplicationRolePermission[]>
+  >('/workspace-application-role-permissions')
+  return unwrapData<WorkspaceApplicationRolePermission[]>(response.data)
+}
+
+export async function createWorkspaceApplicationRolePermission(
+  payload: CreateWorkspaceApplicationRolePermissionDto,
+) {
+  const response = await httpClient.post<
+    ApiSuccessResponse<WorkspaceApplicationRolePermission>
+  >('/workspace-application-role-permissions', payload)
+  return unwrapData<WorkspaceApplicationRolePermission>(response.data)
+}
+
+export async function getWorkspaceApplicationRolePermissionById(id: number | string) {
+  const response = await httpClient.get<
+    ApiSuccessResponse<WorkspaceApplicationRolePermission>
+  >(`/workspace-application-role-permissions/${id}`)
+  return unwrapData<WorkspaceApplicationRolePermission>(response.data)
+}
+
+export async function updateWorkspaceApplicationRolePermission(
+  id: number | string,
+  payload: UpdateWorkspaceApplicationRolePermissionDto,
+) {
+  const response = await httpClient.put<
+    ApiSuccessResponse<WorkspaceApplicationRolePermission>
+  >(`/workspace-application-role-permissions/${id}`, payload)
+  return unwrapData<WorkspaceApplicationRolePermission>(response.data)
+}
+
+export async function deleteWorkspaceApplicationRolePermission(id: number | string) {
+  await httpClient.delete<ApiSuccessResponse<null>>(
+    `/workspace-application-role-permissions/${id}`,
+  )
+}
+
 export async function createWorkspaceUserApplicationPermission(
   payload: CreateWorkspaceUserApplicationPermissionDto,
 ) {
@@ -102,4 +144,12 @@ export const workspaceUserApplicationPermissionsService = {
   getById: getWorkspaceUserApplicationPermissionById,
   update: updateWorkspaceUserApplicationPermission,
   remove: deleteWorkspaceUserApplicationPermission,
+}
+
+export const workspaceApplicationRolePermissionsService = {
+  list: listWorkspaceApplicationRolePermissions,
+  create: createWorkspaceApplicationRolePermission,
+  getById: getWorkspaceApplicationRolePermissionById,
+  update: updateWorkspaceApplicationRolePermission,
+  remove: deleteWorkspaceApplicationRolePermission,
 }

@@ -6,6 +6,14 @@ import {
   WorkspaceApplicationsPage,
 } from '@/modules/workspace-applications/pages/WorkspaceApplicationsPages'
 import {
+  WorkspaceApplicationModuleDetailPage,
+  WorkspaceApplicationModulesPage,
+} from '@/modules/workspace-application-modules/pages/WorkspaceApplicationModulesPages'
+import {
+  WorkspaceApplicationRoleDetailPage,
+  WorkspaceApplicationRolesPage,
+} from '@/modules/workspace-application-roles/pages/WorkspaceApplicationRolesPages'
+import {
   WorkspaceOtpDetailPage,
   WorkspaceOtpsPage,
 } from '@/modules/workspace-otps/pages/WorkspaceOtpsPages'
@@ -15,6 +23,10 @@ import {
   WorkspaceUserApplicationPermissionDetailPage,
   WorkspaceUserApplicationPermissionsPage,
 } from '@/modules/workspace-permissions/pages/WorkspacePermissionsPages'
+import {
+  WorkspaceApplicationRolePermissionDetailPage,
+  WorkspaceApplicationRolePermissionsPage,
+} from '@/modules/workspace-permissions/pages/WorkspaceApplicationRolePermissionsPages'
 import {
   WorkspaceRoleDetailPage,
   WorkspaceRolesPage,
@@ -118,6 +130,14 @@ export const router = createBrowserRouter([
                 element: <WorkspaceUserRoleDetailPage />,
               },
               {
+                path: ROUTE_SEGMENTS.applicationRoles,
+                element: <WorkspaceApplicationRolesPage />,
+              },
+              {
+                path: `${ROUTE_SEGMENTS.applicationRoles}/:workspaceApplicationRoleId`,
+                element: <WorkspaceApplicationRoleDetailPage />,
+              },
+              {
                 path: ROUTE_SEGMENTS.userApplications,
                 element: <WorkspaceUserApplicationsPage />,
               },
@@ -130,8 +150,24 @@ export const router = createBrowserRouter([
                 element: <WorkspaceApplicationPermissionsPage />,
               },
               {
+                path: ROUTE_SEGMENTS.applicationModules,
+                element: <WorkspaceApplicationModulesPage />,
+              },
+              {
+                path: `${ROUTE_SEGMENTS.applicationModules}/:workspaceApplicationModuleId`,
+                element: <WorkspaceApplicationModuleDetailPage />,
+              },
+              {
                 path: `${ROUTE_SEGMENTS.applicationPermissions}/:workspaceApplicationPermissionId`,
                 element: <WorkspaceApplicationPermissionDetailPage />,
+              },
+              {
+                path: ROUTE_SEGMENTS.applicationRolePermissions,
+                element: <WorkspaceApplicationRolePermissionsPage />,
+              },
+              {
+                path: `${ROUTE_SEGMENTS.applicationRolePermissions}/:workspaceApplicationRolePermissionId`,
+                element: <WorkspaceApplicationRolePermissionDetailPage />,
               },
               {
                 path: ROUTE_SEGMENTS.userApplicationPermissions,

@@ -12,7 +12,7 @@ export interface WorkspaceApplication {
   workspace_application_updated_at?: string
 }
 
-export interface WorkspaceApplicationFilters {}
+export type WorkspaceApplicationFilters = Record<string, never>
 
 export interface CreateWorkspaceApplicationDto {
   workspace_application_name: string
@@ -23,4 +23,4 @@ export interface CreateWorkspaceApplicationDto {
   workspace_application_is_active: boolean
 }
 
-export interface UpdateWorkspaceApplicationDto extends CreateWorkspaceApplicationDto {}
+export type UpdateWorkspaceApplicationDto = CreateWorkspaceApplicationDto

@@ -32,11 +32,16 @@ export function LoginPage() {
   }
 
   return (
-    <Card
-      className="auth-card"
-      title="Iniciar sesión"
-      description="Accede al panel principal del Workspace con tu cuenta global."
-    >
+    <Card className="auth-card">
+      <div className="auth-card__intro">
+        <img className="auth-card__logo" src="/ucebul.png" alt="Ucebul" />
+        <div className="auth-card__intro-copy">
+          <p className="auth-card__eyebrow">Workspace Platform</p>
+          <h2>Iniciar sesión</h2>
+          <p>Accede al panel principal del Workspace con tu cuenta global.</p>
+        </div>
+      </div>
+
       <form className="auth-form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
         <RHFTextField
           autoComplete="email"

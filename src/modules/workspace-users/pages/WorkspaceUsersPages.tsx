@@ -35,9 +35,10 @@ import { getErrorMessage } from '@/utils/error-message'
 
 const createWorkspaceUserSchema = z.object({
   workspace_user_email: z.email('Ingresa un correo válido'),
-  workspace_user_password: z
+  workspace_user_document_number: z
     .string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    .trim()
+    .min(1, 'El número de documento es obligatorio'),
   workspace_user_name: z.string().trim().min(1, 'El nombre es obligatorio'),
   workspace_user_last_name: z
     .string()
@@ -47,6 +48,10 @@ const createWorkspaceUserSchema = z.object({
 
 const updateWorkspaceUserSchema = z.object({
   workspace_user_email: z.email('Ingresa un correo válido'),
+  workspace_user_document_number: z
+    .string()
+    .trim()
+    .min(1, 'El número de documento es obligatorio'),
   workspace_user_password: z.string().trim().optional(),
   workspace_user_name: z.string().trim().min(1, 'El nombre es obligatorio'),
   workspace_user_last_name: z
@@ -57,7 +62,7 @@ const updateWorkspaceUserSchema = z.object({
 
 const createDefaults: CreateWorkspaceUserDto = {
   workspace_user_email: '',
-  workspace_user_password: '',
+  workspace_user_document_number: '',
   workspace_user_name: '',
   workspace_user_last_name: '',
 }
@@ -70,10 +75,9 @@ const userCreateFields: Array<ResourceFormField<CreateWorkspaceUserDto>> = [
     placeholder: 'usuario@workspace.com',
   },
   {
-    name: 'workspace_user_password',
-    label: 'Contraseña',
-    type: 'password',
-    placeholder: '••••••••',
+    name: 'workspace_user_document_number',
+    label: 'Número de documento',
+    placeholder: '1234567890',
   },
   {
     name: 'workspace_user_name',
@@ -98,6 +102,11 @@ const userUpdateFields: Array<ResourceFormField<UpdateWorkspaceUserDto>> = [
     name: 'workspace_user_name',
     label: 'Nombre',
     placeholder: 'Jane',
+  },
+  {
+    name: 'workspace_user_document_number',
+    label: 'Número de documento',
+    placeholder: '1234567890',
   },
   {
     name: 'workspace_user_last_name',
@@ -177,6 +186,11 @@ export function WorkspaceUsersPage() {
               cell: (row) => row.workspace_user_email,
             },
             {
+              key: 'document',
+              header: 'Documento',
+              cell: (row) => row.workspace_user_document_number ?? 'Sin documento',
+            },
+            {
               key: 'actions',
               header: 'Acciones',
               cell: (row) => (
@@ -211,7 +225,7 @@ export function WorkspaceUsersPage() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title="Crear usuario"
-        description="Usa los nombres exactos del backend Laravel para el payload."
+        description="Registra la identidad básica del usuario. La contraseña inicial se gestiona desde el servidor."
       >
         <ResourceForm
           form={form}
@@ -253,6 +267,7 @@ export function WorkspaceUserDetailPage() {
     resolver: zodResolver(updateWorkspaceUserSchema),
     defaultValues: {
       workspace_user_email: '',
+      workspace_user_document_number: '',
       workspace_user_password: '',
       workspace_user_name: '',
       workspace_user_last_name: '',
@@ -266,6 +281,8 @@ export function WorkspaceUserDetailPage() {
 
     form.reset({
       workspace_user_email: userQuery.data.workspace_user_email,
+      workspace_user_document_number:
+        userQuery.data.workspace_user_document_number ?? '',
       workspace_user_password: '',
       workspace_user_name: userQuery.data.workspace_user_name,
       workspace_user_last_name: userQuery.data.workspace_user_last_name,

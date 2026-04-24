@@ -10,6 +10,7 @@ import { Modal } from '@/components/base/Modal'
 import { ResourceTable } from '@/components/base/ResourceTable'
 import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingState } from '@/components/feedback/LoadingState'
+import { PermissionBadge } from '@/components/feedback/PermissionBadge'
 import { StatusBadge } from '@/components/feedback/StatusBadge'
 import { CrudPageLayout } from '@/components/layout/CrudPageLayout'
 import { SectionCard } from '@/components/layout/SectionCard'
@@ -25,6 +26,8 @@ import {
   useWorkspaceApplicationQuery,
   useWorkspaceApplicationsQuery,
 } from '@/modules/workspace-applications/hooks/useWorkspaceApplicationsQuery'
+import { useWorkspaceApplicationModulesQuery } from '@/modules/workspace-application-modules/hooks/useWorkspaceApplicationModulesQuery'
+import { useWorkspaceApplicationPermissionsByApplicationQuery } from '@/modules/workspace-permissions/hooks/useWorkspacePermissionsQuery'
 import type {
   CreateWorkspaceApplicationDto,
   UpdateWorkspaceApplicationDto,
@@ -243,6 +246,11 @@ export function WorkspaceApplicationDetailPage() {
   const params = useParams()
   const workspaceApplicationId = params.workspaceApplicationId ?? ''
   const applicationQuery = useWorkspaceApplicationQuery(workspaceApplicationId)
+  const modulesQuery = useWorkspaceApplicationModulesQuery({
+    workspace_application_id: workspaceApplicationId,
+  })
+  const permissionsQuery =
+    useWorkspaceApplicationPermissionsByApplicationQuery(workspaceApplicationId)
   const updateMutation = useUpdateWorkspaceApplicationMutation(workspaceApplicationId)
   const deleteMutation = useDeleteWorkspaceApplicationMutation()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
@@ -291,6 +299,21 @@ export function WorkspaceApplicationDetailPage() {
     return <ErrorState description={getErrorMessage(applicationQuery.error)} />
   }
 
+  if (modulesQuery.error) {
+    return <ErrorState description={getErrorMessage(modulesQuery.error)} />
+  }
+
+  if (permissionsQuery.error) {
+    return <ErrorState description={getErrorMessage(permissionsQuery.error)} />
+  }
+
+  const modules = [...(modulesQuery.data ?? [])].sort(
+    (left, right) =>
+      left.workspace_application_module_order -
+      right.workspace_application_module_order,
+  )
+  const permissions = permissionsQuery.data ?? []
+
   return (
     <CrudPageLayout
       eyebrow="Super Admin"
@@ -311,6 +334,83 @@ export function WorkspaceApplicationDetailPage() {
             />
           }
         />
+      </SectionCard>
+
+      <SectionCard
+        title="Módulos"
+        description="Estructura funcional de la aplicación y sus permisos asociados."
+        action={
+          <Link className="button button--secondary" to={APP_ROUTES.applicationModules}>
+            Administrar módulos
+          </Link>
+        }
+      >
+        {modulesQuery.isLoading || permissionsQuery.isLoading ? (
+          <LoadingState message="Cargando módulos y permisos..." />
+        ) : null}
+        {!modulesQuery.isLoading && !permissionsQuery.isLoading ? (
+          modules.length ? (
+            <div className="module-grid">
+              {modules.map((module) => {
+                const modulePermissions = permissions.filter(
+                  (permission) =>
+                    String(
+                      permission.workspace_application_permission_workspace_application_module_id,
+                    ) === String(module.workspace_application_module_id),
+                )
+
+                return (
+                  <section
+                    className="module-card"
+                    key={module.workspace_application_module_id}
+                  >
+                    <div className="module-card__header">
+                      <div>
+                        <h3>{module.workspace_application_module_name}</h3>
+                        <p className="module-card__meta">
+                          {module.workspace_application_module_slug}
+                        </p>
+                      </div>
+                      <StatusBadge
+                        label={
+                          module.workspace_application_module_is_active
+                            ? 'Activo'
+                            : 'Inactivo'
+                        }
+                        tone={
+                          module.workspace_application_module_is_active
+                            ? 'success'
+                            : 'warning'
+                        }
+                      />
+                    </div>
+                    {module.workspace_application_module_description ? (
+                      <p className="module-card__description">
+                        {module.workspace_application_module_description}
+                      </p>
+                    ) : null}
+                    {modulePermissions.length ? (
+                      <div className="permission-badge-list">
+                        {modulePermissions.map((permission) => (
+                          <PermissionBadge
+                            key={permission.workspace_application_permission_id}
+                            label={permission.workspace_application_permission_slug}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted">Este módulo aún no tiene permisos.</p>
+                    )}
+                  </section>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-muted">
+              Esta aplicación todavía no tiene módulos configurados.
+            </p>
+          )
+        ) : null}
       </SectionCard>
 
       <SectionCard

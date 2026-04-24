@@ -31,10 +31,14 @@ import { getErrorMessage } from '@/utils/error-message'
 
 const workspaceRoleSchema = z.object({
   workspace_role_name: z.string().trim().min(1, 'El nombre del rol es obligatorio'),
+  workspace_role_slug: z.string().trim().min(1, 'El slug es obligatorio'),
+  workspace_role_description: z.string().trim().optional().or(z.literal('')),
 })
 
 const defaultValues: CreateWorkspaceRoleDto = {
   workspace_role_name: '',
+  workspace_role_slug: '',
+  workspace_role_description: '',
 }
 
 export function WorkspaceRolesPage() {
@@ -92,6 +96,11 @@ export function WorkspaceRolesPage() {
               cell: (row) => row.workspace_role_name,
             },
             {
+              key: 'slug',
+              header: 'Slug',
+              cell: (row) => row.workspace_role_slug,
+            },
+            {
               key: 'actions',
               header: 'Acciones',
               cell: (row) => (
@@ -129,10 +138,26 @@ export function WorkspaceRolesPage() {
             {
               name: 'workspace_role_name',
               label: 'Nombre del rol',
+              placeholder: 'Administrador Workspace',
+            },
+            {
+              name: 'workspace_role_slug',
+              label: 'Slug',
               placeholder: 'admin',
             },
+            {
+              name: 'workspace_role_description',
+              label: 'Descripción',
+              type: 'textarea',
+              placeholder: 'Gestiona la operación general del workspace.',
+            },
           ]}
-          onSubmit={handleCreate}
+          onSubmit={async (values) => {
+            await handleCreate({
+              ...values,
+              workspace_role_description: values.workspace_role_description || undefined,
+            })
+          }}
           columns={1}
           actions={
             <FormActions
@@ -178,6 +203,8 @@ export function WorkspaceRoleDetailPage() {
 
     form.reset({
       workspace_role_name: roleQuery.data.workspace_role_name,
+      workspace_role_slug: roleQuery.data.workspace_role_slug,
+      workspace_role_description: roleQuery.data.workspace_role_description ?? '',
     })
   }, [form, roleQuery.data])
 
@@ -211,10 +238,26 @@ export function WorkspaceRoleDetailPage() {
             {
               name: 'workspace_role_name',
               label: 'Nombre del rol',
+              placeholder: 'Administrador Workspace',
+            },
+            {
+              name: 'workspace_role_slug',
+              label: 'Slug',
               placeholder: 'admin',
             },
+            {
+              name: 'workspace_role_description',
+              label: 'Descripción',
+              type: 'textarea',
+              placeholder: 'Gestiona la operación general del workspace.',
+            },
           ]}
-          onSubmit={handleSubmit}
+          onSubmit={async (values) => {
+            await handleSubmit({
+              ...values,
+              workspace_role_description: values.workspace_role_description || undefined,
+            })
+          }}
           columns={1}
           actions={
             <FormActions

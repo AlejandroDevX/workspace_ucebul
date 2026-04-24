@@ -12,11 +12,11 @@ export interface WorkspaceUserRole {
   workspace_user_role_updated_at?: string
 }
 
-export interface WorkspaceUserRoleFilters {}
+export type WorkspaceUserRoleFilters = Record<string, never>
 
 export interface CreateWorkspaceUserRoleDto {
   workspace_user_role_workspace_user_id: string
   workspace_user_role_workspace_role_id: string
 }
 
-export interface UpdateWorkspaceUserRoleDto extends CreateWorkspaceUserRoleDto {}
+export type UpdateWorkspaceUserRoleDto = CreateWorkspaceUserRoleDto

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus, Save, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useMemo, useState } from 'react'
+import { useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { z } from 'zod'
 import { Button } from '@/components/base/Button'
@@ -17,7 +17,9 @@ import { CrudPageLayout } from '@/components/layout/CrudPageLayout'
 import { AccessGuard } from '@/components/layout/AccessGuard'
 import { SectionCard } from '@/components/layout/SectionCard'
 import { FormActions } from '@/components/forms/FormActions'
-import { ResourceForm } from '@/components/forms/ResourceForm'
+import { ResourceForm, type ResourceFormField } from '@/components/forms/ResourceForm'
+import { useWorkspaceApplicationsQuery } from '@/modules/workspace-applications/hooks/useWorkspaceApplicationsQuery'
+import { useWorkspaceApplicationModulesQuery } from '@/modules/workspace-application-modules/hooks/useWorkspaceApplicationModulesQuery'
 import {
   useCreateWorkspaceApplicationPermissionMutation,
   useDeleteWorkspaceApplicationPermissionMutation,
@@ -37,12 +39,18 @@ import type {
 import { getWorkspaceUserApplicationSummary } from '@/modules/workspace-user-applications/utils/access-display'
 import { APP_ROUTES, detailRoutes } from '@/routes/paths'
 import { getErrorMessage } from '@/utils/error-message'
+import { groupFlatPermissionsByModule } from '@/utils/permissions'
 
 const applicationPermissionSchema = z.object({
   workspace_application_permission_workspace_application_id: z
     .string()
     .trim()
     .min(1, 'El ID de aplicación es obligatorio'),
+  workspace_application_permission_workspace_application_module_id: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal('')),
   workspace_application_permission_name: z
     .string()
     .trim()
@@ -60,52 +68,202 @@ const applicationPermissionSchema = z.object({
 
 const applicationPermissionDefaults: CreateWorkspaceApplicationPermissionDto = {
   workspace_application_permission_workspace_application_id: '',
+  workspace_application_permission_workspace_application_module_id: '',
   workspace_application_permission_name: '',
   workspace_application_permission_slug: '',
   workspace_application_permission_description: '',
 }
 
-const applicationPermissionFields = [
-  {
-    name: 'workspace_application_permission_workspace_application_id',
-    label: 'ID de aplicación',
-    placeholder: '5',
-  },
-  {
-    name: 'workspace_application_permission_name',
-    label: 'Nombre',
-    placeholder: 'Read',
-  },
-  {
-    name: 'workspace_application_permission_slug',
-    label: 'Slug',
-    placeholder: 'read',
-  },
-  {
-    name: 'workspace_application_permission_description',
-    label: 'Descripción',
-    type: 'textarea',
-    placeholder: 'Can read records',
-  },
-] as const
+function buildApplicationPermissionFields(
+  applicationOptions: Array<{ label: string; value: string }>,
+  moduleOptions: Array<{ label: string; value: string }>,
+): Array<ResourceFormField<CreateWorkspaceApplicationPermissionDto>> {
+  return [
+    {
+      name: 'workspace_application_permission_workspace_application_id',
+      label: 'Aplicación',
+      type: 'select',
+      options: applicationOptions,
+    },
+    {
+      name: 'workspace_application_permission_workspace_application_module_id',
+      label: 'Módulo',
+      type: 'select',
+      options: moduleOptions,
+      hint: 'Opcional. Si no seleccionas módulo, el permiso quedará bajo Sin módulo.',
+    },
+    {
+      name: 'workspace_application_permission_name',
+      label: 'Nombre',
+      placeholder: 'Read',
+    },
+    {
+      name: 'workspace_application_permission_slug',
+      label: 'Slug',
+      placeholder: 'read',
+    },
+    {
+      name: 'workspace_application_permission_description',
+      label: 'Descripción',
+      type: 'textarea',
+      placeholder: 'Can read records',
+    },
+  ]
+}
+
+function sanitizePermissionPayload<TPayload extends CreateWorkspaceApplicationPermissionDto>(
+  values: TPayload,
+) {
+  return {
+    ...values,
+    workspace_application_permission_workspace_application_module_id:
+      values.workspace_application_permission_workspace_application_module_id ||
+      undefined,
+    workspace_application_permission_description:
+      values.workspace_application_permission_description || undefined,
+  }
+}
+
+interface GroupedPermissionsListProps {
+  permissions: WorkspaceApplicationPermission[]
+  onDelete: (permission: WorkspaceApplicationPermission) => void
+}
+
+function GroupedPermissionsList({
+  permissions,
+  onDelete,
+}: GroupedPermissionsListProps) {
+  const groupedPermissions = groupFlatPermissionsByModule(permissions)
+
+  if (permissions.length === 0) {
+    return (
+      <p className="text-muted">
+        Todavía no hay permisos registrados para mostrar.
+      </p>
+    )
+  }
+
+  return (
+    <div className="module-grid">
+      {Object.entries(groupedPermissions).map(([groupKey, group]) => (
+        <section className="module-card" key={groupKey}>
+          <div className="module-card__header">
+            <div>
+              <h3>{group.module_name}</h3>
+              <p className="module-card__meta">
+                {group.module_slug ?? 'Sin módulo'}
+              </p>
+            </div>
+            <span className="module-card__meta">
+              {group.permissions.length} permisos
+            </span>
+          </div>
+          <div className="module-card__permissions">
+            {group.permissions.map((permission) => (
+              <div
+                className="permission-detail-card"
+                key={permission.workspace_application_permission_id}
+              >
+                <div>
+                  <p className="permission-detail-card__label">
+                    {permission.workspace_application?.workspace_application_name ??
+                      'Aplicación'}
+                  </p>
+                  <strong>{permission.workspace_application_permission_name}</strong>
+                </div>
+                <div className="permission-badge-list">
+                  <PermissionBadge
+                    label={permission.workspace_application_permission_slug}
+                  />
+                </div>
+                <div className="resource-table__actions">
+                  <Link
+                    className="button button--ghost"
+                    to={detailRoutes.applicationPermission(
+                      permission.workspace_application_permission_id,
+                    )}
+                  >
+                    Abrir
+                  </Link>
+                  <AccessGuard allowedRoles={['super_admin']}>
+                    <Button
+                      variant="danger"
+                      leftIcon={<Trash2 size={16} />}
+                      onClick={() => onDelete(permission)}
+                    >
+                      Eliminar
+                    </Button>
+                  </AccessGuard>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
 
 export function WorkspaceApplicationPermissionsPage() {
   const query = useWorkspaceApplicationPermissionsQuery()
+  const applicationsQuery = useWorkspaceApplicationsQuery()
+  const modulesQuery = useWorkspaceApplicationModulesQuery()
   const createMutation = useCreateWorkspaceApplicationPermissionMutation()
   const deleteMutation = useDeleteWorkspaceApplicationPermissionMutation()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<WorkspaceApplicationPermission | null>(null)
+  const applicationOptions = useMemo(
+    () =>
+      (applicationsQuery.data ?? []).map((application) => ({
+        label: application.workspace_application_name,
+        value: String(application.workspace_application_id),
+      })),
+    [applicationsQuery.data],
+  )
   const form = useForm<CreateWorkspaceApplicationPermissionDto>({
     resolver: zodResolver(applicationPermissionSchema),
     defaultValues: applicationPermissionDefaults,
   })
+  const selectedApplicationId = useWatch({
+    control: form.control,
+    name: 'workspace_application_permission_workspace_application_id',
+  })
+  const selectedModuleId = useWatch({
+    control: form.control,
+    name: 'workspace_application_permission_workspace_application_module_id',
+  })
+  const moduleOptions = useMemo(
+    () =>
+      (modulesQuery.data ?? [])
+        .filter((module) =>
+          selectedApplicationId
+            ? String(module.workspace_application_module_workspace_application_id) ===
+              String(selectedApplicationId)
+            : false,
+        )
+        .map((module) => ({
+          label: module.workspace_application_module_name,
+          value: String(module.workspace_application_module_id),
+        })),
+    [modulesQuery.data, selectedApplicationId],
+  )
+
+  useEffect(() => {
+    if (!modulesQuery.data || !selectedModuleId) {
+      return
+    }
+
+    const isModuleFromSelectedApplication = moduleOptions.some(
+      (option) => option.value === selectedModuleId,
+    )
+
+    if (!isModuleFromSelectedApplication) {
+      form.setValue('workspace_application_permission_workspace_application_module_id', '')
+    }
+  }, [form, moduleOptions, modulesQuery.data, selectedModuleId])
 
   async function handleCreate(values: CreateWorkspaceApplicationPermissionDto) {
-    await createMutation.mutateAsync({
-      ...values,
-      workspace_application_permission_description:
-        values.workspace_application_permission_description || undefined,
-    })
+    await createMutation.mutateAsync(sanitizePermissionPayload(values))
     form.reset(applicationPermissionDefaults)
     setIsCreateOpen(false)
   }
@@ -119,12 +277,20 @@ export function WorkspaceApplicationPermissionsPage() {
     setItemToDelete(null)
   }
 
-  if (query.isLoading) {
+  if (query.isLoading || applicationsQuery.isLoading || modulesQuery.isLoading) {
     return <LoadingState fullScreen message="Cargando permisos por aplicación..." />
   }
 
   if (query.error) {
     return <ErrorState description={getErrorMessage(query.error)} />
+  }
+
+  if (applicationsQuery.error) {
+    return <ErrorState description={getErrorMessage(applicationsQuery.error)} />
+  }
+
+  if (modulesQuery.error) {
+    return <ErrorState description={getErrorMessage(modulesQuery.error)} />
   }
 
   return (
@@ -139,56 +305,9 @@ export function WorkspaceApplicationPermissionsPage() {
       }
     >
       <SectionCard title="Listado" description="Permisos globales disponibles por aplicación.">
-        <ResourceTable
-          caption="Workspace application permissions"
-          columns={[
-            {
-              key: 'name',
-              header: 'Permiso',
-              cell: (row) => row.workspace_application_permission_name,
-            },
-            {
-              key: 'slug',
-              header: 'Slug',
-              cell: (row) => row.workspace_application_permission_slug,
-            },
-            {
-              key: 'application',
-              header: 'Aplicación',
-              cell: (row) =>
-                row.workspace_application?.workspace_application_name ??
-                `Aplicación #${row.workspace_application_permission_workspace_application_id}`,
-            },
-            {
-              key: 'actions',
-              header: 'Acciones',
-              cell: (row) => (
-                <div className="resource-table__actions">
-                  <Link
-                    className="button button--ghost"
-                    to={detailRoutes.applicationPermission(
-                      row.workspace_application_permission_id,
-                    )}
-                  >
-                    Abrir
-                  </Link>
-                  <AccessGuard allowedRoles={['super_admin']}>
-                    <Button
-                      variant="danger"
-                      leftIcon={<Trash2 size={16} />}
-                      onClick={() => setItemToDelete(row)}
-                    >
-                      Eliminar
-                    </Button>
-                  </AccessGuard>
-                </div>
-              ),
-            },
-          ]}
-          data={query.data ?? []}
-          getRowId={(row) => row.workspace_application_permission_id}
-          emptyTitle="Sin permisos"
-          emptyDescription="Todavía no hay permisos registrados."
+        <GroupedPermissionsList
+          permissions={query.data ?? []}
+          onDelete={setItemToDelete}
         />
       </SectionCard>
 
@@ -196,11 +315,11 @@ export function WorkspaceApplicationPermissionsPage() {
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title="Crear permiso"
-        description="Usa IDs explícitos mientras el backend mantenga el catálogo de aplicaciones restringido por rol."
+        description="Selecciona la aplicación desde el catálogo y define el permiso."
       >
         <ResourceForm
           form={form}
-          fields={applicationPermissionFields}
+          fields={buildApplicationPermissionFields(applicationOptions, moduleOptions)}
           onSubmit={handleCreate}
           actions={
             <FormActions
@@ -231,14 +350,47 @@ export function WorkspaceApplicationPermissionDetailPage() {
   const params = useParams()
   const workspaceApplicationPermissionId = params.workspaceApplicationPermissionId ?? ''
   const query = useWorkspaceApplicationPermissionQuery(workspaceApplicationPermissionId)
+  const applicationsQuery = useWorkspaceApplicationsQuery()
+  const modulesQuery = useWorkspaceApplicationModulesQuery()
   const updateMutation =
     useUpdateWorkspaceApplicationPermissionMutation(workspaceApplicationPermissionId)
   const deleteMutation = useDeleteWorkspaceApplicationPermissionMutation()
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const applicationOptions = useMemo(
+    () =>
+      (applicationsQuery.data ?? []).map((application) => ({
+        label: application.workspace_application_name,
+        value: String(application.workspace_application_id),
+      })),
+    [applicationsQuery.data],
+  )
   const form = useForm<UpdateWorkspaceApplicationPermissionDto>({
     resolver: zodResolver(applicationPermissionSchema),
     defaultValues: applicationPermissionDefaults,
   })
+  const selectedApplicationId = useWatch({
+    control: form.control,
+    name: 'workspace_application_permission_workspace_application_id',
+  })
+  const selectedModuleId = useWatch({
+    control: form.control,
+    name: 'workspace_application_permission_workspace_application_module_id',
+  })
+  const moduleOptions = useMemo(
+    () =>
+      (modulesQuery.data ?? [])
+        .filter((module) =>
+          selectedApplicationId
+            ? String(module.workspace_application_module_workspace_application_id) ===
+              String(selectedApplicationId)
+            : false,
+        )
+        .map((module) => ({
+          label: module.workspace_application_module_name,
+          value: String(module.workspace_application_module_id),
+        })),
+    [modulesQuery.data, selectedApplicationId],
+  )
 
   useEffect(() => {
     if (!query.data) {
@@ -249,6 +401,9 @@ export function WorkspaceApplicationPermissionDetailPage() {
       workspace_application_permission_workspace_application_id: String(
         query.data.workspace_application_permission_workspace_application_id,
       ),
+      workspace_application_permission_workspace_application_module_id: String(
+        query.data.workspace_application_permission_workspace_application_module_id ?? '',
+      ),
       workspace_application_permission_name:
         query.data.workspace_application_permission_name,
       workspace_application_permission_slug:
@@ -258,12 +413,22 @@ export function WorkspaceApplicationPermissionDetailPage() {
     })
   }, [form, query.data])
 
+  useEffect(() => {
+    if (!modulesQuery.data || !selectedModuleId) {
+      return
+    }
+
+    const isModuleFromSelectedApplication = moduleOptions.some(
+      (option) => option.value === selectedModuleId,
+    )
+
+    if (!isModuleFromSelectedApplication) {
+      form.setValue('workspace_application_permission_workspace_application_module_id', '')
+    }
+  }, [form, moduleOptions, modulesQuery.data, selectedModuleId])
+
   async function handleSubmit(values: UpdateWorkspaceApplicationPermissionDto) {
-    await updateMutation.mutateAsync({
-      ...values,
-      workspace_application_permission_description:
-        values.workspace_application_permission_description || undefined,
-    })
+    await updateMutation.mutateAsync(sanitizePermissionPayload(values))
   }
 
   async function handleDelete() {
@@ -271,12 +436,20 @@ export function WorkspaceApplicationPermissionDetailPage() {
     navigate(APP_ROUTES.applicationPermissions, { replace: true })
   }
 
-  if (query.isLoading) {
+  if (query.isLoading || applicationsQuery.isLoading || modulesQuery.isLoading) {
     return <LoadingState fullScreen message="Cargando permiso..." />
   }
 
   if (query.error) {
     return <ErrorState description={getErrorMessage(query.error)} />
+  }
+
+  if (applicationsQuery.error) {
+    return <ErrorState description={getErrorMessage(applicationsQuery.error)} />
+  }
+
+  if (modulesQuery.error) {
+    return <ErrorState description={getErrorMessage(modulesQuery.error)} />
   }
 
   return (
@@ -288,7 +461,7 @@ export function WorkspaceApplicationPermissionDetailPage() {
       <SectionCard title="Editar permiso" description={`ID ${workspaceApplicationPermissionId}`}>
         <ResourceForm
           form={form}
-          fields={applicationPermissionFields}
+          fields={buildApplicationPermissionFields(applicationOptions, moduleOptions)}
           onSubmit={handleSubmit}
           actions={
             <FormActions

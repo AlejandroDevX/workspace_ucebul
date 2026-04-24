@@ -43,15 +43,11 @@ export function AccessPermissionsDrawer({
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<string[]>([])
 
   useEffect(() => {
-    if (!isOpen) {
-      setSelectedPermissionIds([])
+    if (!isOpen || !assignedPermissionsQuery.data) {
       return
     }
 
-    if (!assignedPermissionsQuery.data) {
-      return
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedPermissionIds(
       assignedPermissionsQuery.data.map((item) =>
         String(item.workspace_user_application_permission_wap_id),
@@ -61,7 +57,10 @@ export function AccessPermissionsDrawer({
 
   const summary = access ? getWorkspaceUserApplicationSummary(access) : null
   const availablePermissions = availablePermissionsQuery.data ?? []
-  const assignedPermissions = assignedPermissionsQuery.data ?? []
+  const assignedPermissions = useMemo(
+    () => assignedPermissionsQuery.data ?? [],
+    [assignedPermissionsQuery.data],
+  )
   const hasChanges = useMemo(() => {
     const current = assignedPermissions.map((item) =>
       String(item.workspace_user_application_permission_wap_id),

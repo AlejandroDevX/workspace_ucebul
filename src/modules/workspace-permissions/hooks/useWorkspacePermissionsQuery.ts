@@ -1,23 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createWorkspaceApplicationPermission,
+  createWorkspaceApplicationRolePermission,
   createWorkspaceUserApplicationPermission,
   deleteWorkspaceApplicationPermission,
+  deleteWorkspaceApplicationRolePermission,
   deleteWorkspaceUserApplicationPermission,
   getWorkspaceApplicationPermissionById,
+  getWorkspaceApplicationRolePermissionById,
   getWorkspaceUserApplicationPermissionById,
   workspaceApplicationPermissionsService,
+  workspaceApplicationRolePermissionsService,
   workspaceUserApplicationPermissionsService,
   updateWorkspaceApplicationPermission,
+  updateWorkspaceApplicationRolePermission,
   updateWorkspaceUserApplicationPermission,
 } from '@/modules/workspace-permissions/api/workspace-permissions.service'
 import type {
   CreateWorkspaceApplicationPermissionDto,
+  CreateWorkspaceApplicationRolePermissionDto,
   CreateWorkspaceUserApplicationPermissionDto,
   UpdateWorkspaceApplicationPermissionDto,
+  UpdateWorkspaceApplicationRolePermissionDto,
   UpdateWorkspaceUserApplicationPermissionDto,
+  WorkspaceApplicationRolePermission,
   WorkspaceUserApplicationPermission,
 } from '@/modules/workspace-permissions/types/workspace-permission.types'
+import { workspaceApplicationRolesQueryKey } from '@/modules/workspace-application-roles/hooks/useWorkspaceApplicationRolesQuery'
 import { workspaceUserApplicationsQueryKey } from '@/modules/workspace-user-applications/hooks/useWorkspaceUserApplicationsQuery'
 import type { EntityId } from '@/types/common'
 
@@ -26,6 +35,9 @@ export const workspaceApplicationPermissionsQueryKey = [
 ] as const
 export const workspaceUserApplicationPermissionsQueryKey = [
   'workspace-user-application-permissions',
+] as const
+export const workspaceApplicationRolePermissionsQueryKey = [
+  'workspace-application-role-permissions',
 ] as const
 
 export function useWorkspaceApplicationPermissionsQuery() {
@@ -101,6 +113,37 @@ export function useWorkspaceUserApplicationPermissionsQuery() {
   })
 }
 
+export function useWorkspaceApplicationRolePermissionsQuery() {
+  return useQuery({
+    queryKey: workspaceApplicationRolePermissionsQueryKey,
+    queryFn: workspaceApplicationRolePermissionsService.list,
+  })
+}
+
+export function useWorkspaceApplicationRolePermissionsByRoleQuery(
+  workspaceApplicationRoleId?: EntityId,
+) {
+  return useQuery({
+    queryKey: [
+      ...workspaceApplicationRolePermissionsQueryKey,
+      'by-role',
+      workspaceApplicationRoleId,
+    ],
+    queryFn: workspaceApplicationRolePermissionsService.list,
+    enabled:
+      workspaceApplicationRoleId !== undefined &&
+      workspaceApplicationRoleId !== null &&
+      workspaceApplicationRoleId !== '',
+    select: (items) =>
+      items.filter(
+        (item) =>
+          String(
+            item.workspace_application_role_permission_war_id,
+          ) === String(workspaceApplicationRoleId),
+      ),
+  })
+}
+
 export function useWorkspaceApplicationPermissionsByApplicationQuery(
   workspaceApplicationId?: EntityId,
 ) {
@@ -155,6 +198,14 @@ export function useWorkspaceUserApplicationPermissionQuery(id?: EntityId) {
   })
 }
 
+export function useWorkspaceApplicationRolePermissionQuery(id?: EntityId) {
+  return useQuery({
+    queryKey: [...workspaceApplicationRolePermissionsQueryKey, id],
+    queryFn: () => getWorkspaceApplicationRolePermissionById(id!),
+    enabled: id !== undefined && id !== null && id !== '',
+  })
+}
+
 export function useCreateWorkspaceUserApplicationPermissionMutation() {
   const queryClient = useQueryClient()
 
@@ -165,6 +216,25 @@ export function useCreateWorkspaceUserApplicationPermissionMutation() {
       await queryClient.invalidateQueries({
         queryKey: workspaceUserApplicationPermissionsQueryKey,
       })
+    },
+  })
+}
+
+export function useCreateWorkspaceApplicationRolePermissionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateWorkspaceApplicationRolePermissionDto) =>
+      createWorkspaceApplicationRolePermission(payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolePermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolesQueryKey,
+        }),
+      ])
     },
   })
 }
@@ -182,6 +252,28 @@ export function useUpdateWorkspaceUserApplicationPermissionMutation(id: EntityId
         }),
         queryClient.invalidateQueries({
           queryKey: [...workspaceUserApplicationPermissionsQueryKey, id],
+        }),
+      ])
+    },
+  })
+}
+
+export function useUpdateWorkspaceApplicationRolePermissionMutation(id: EntityId) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: UpdateWorkspaceApplicationRolePermissionDto) =>
+      updateWorkspaceApplicationRolePermission(id, payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolePermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolesQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [...workspaceApplicationRolePermissionsQueryKey, id],
         }),
       ])
     },
@@ -206,9 +298,36 @@ export function useDeleteWorkspaceUserApplicationPermissionMutation() {
   })
 }
 
+export function useDeleteWorkspaceApplicationRolePermissionMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: EntityId) => deleteWorkspaceApplicationRolePermission(id),
+    onSuccess: async (_, id) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolePermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolesQueryKey,
+        }),
+        queryClient.removeQueries({
+          queryKey: [...workspaceApplicationRolePermissionsQueryKey, id],
+        }),
+      ])
+    },
+  })
+}
+
 interface SyncWorkspaceUserApplicationPermissionsPayload {
   workspaceUserApplicationId: EntityId
   currentAssignments: WorkspaceUserApplicationPermission[]
+  selectedPermissionIds: string[]
+}
+
+interface SyncWorkspaceApplicationRolePermissionsPayload {
+  workspaceApplicationRoleId: EntityId
+  currentAssignments: WorkspaceApplicationRolePermission[]
   selectedPermissionIds: string[]
 }
 
@@ -264,6 +383,73 @@ export function useSyncWorkspaceUserApplicationPermissionsMutation() {
             ...workspaceUserApplicationPermissionsQueryKey,
             'by-access',
             variables.workspaceUserApplicationId,
+          ],
+        }),
+      ])
+    },
+  })
+}
+
+export function useSyncWorkspaceApplicationRolePermissionsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      workspaceApplicationRoleId,
+      currentAssignments,
+      selectedPermissionIds,
+    }: SyncWorkspaceApplicationRolePermissionsPayload) => {
+      const selectedIds = new Set(selectedPermissionIds.map((item) => String(item)))
+      const currentMap = new Map(
+        currentAssignments.map((assignment) => [
+          String(
+            assignment.workspace_application_role_permission_wap_id,
+          ),
+          assignment,
+        ]),
+      )
+
+      const assignmentsToCreate = [...selectedIds].filter(
+        (permissionId) => !currentMap.has(permissionId),
+      )
+      const assignmentsToDelete = currentAssignments.filter(
+        (assignment) =>
+          !selectedIds.has(
+            String(
+              assignment.workspace_application_role_permission_wap_id,
+            ),
+          ),
+      )
+
+      await Promise.all([
+        ...assignmentsToCreate.map((permissionId) =>
+          createWorkspaceApplicationRolePermission({
+            workspace_application_role_permission_war_id: String(
+              workspaceApplicationRoleId,
+            ),
+            workspace_application_role_permission_wap_id: permissionId,
+          }),
+        ),
+        ...assignmentsToDelete.map((assignment) =>
+          deleteWorkspaceApplicationRolePermission(
+            assignment.workspace_application_role_permission_id,
+          ),
+        ),
+      ])
+    },
+    onSuccess: async (_, variables) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolePermissionsQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: workspaceApplicationRolesQueryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [
+            ...workspaceApplicationRolePermissionsQueryKey,
+            'by-role',
+            variables.workspaceApplicationRoleId,
           ],
         }),
       ])
