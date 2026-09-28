@@ -1,3 +1,9 @@
+@import 'foundation-ui/styles/tokens.css';
+@import 'foundation-ui/styles/themes.css';
+@import 'foundation-ui/styles/base.css';
+@import 'foundation-ui/styles/utilities.css';
+@import 'foundation-ui/styles/animations.css';
+@import 'foundation-ui/styles/components.css';
 @import './tokens.css';
 @import './base.css';
 @import './utilities.css';
